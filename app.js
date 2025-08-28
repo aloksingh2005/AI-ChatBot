@@ -1,53 +1,37 @@
 // Main app initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize API key in the global window object
-    const apiKey = localStorage.getItem('openrouter_api_key') || '';
-    window.OPENROUTER_API_KEY = apiKey;
-    console.log('API Key initialized:', apiKey ? 'Key is set (masked)' : 'No key found');
-    
-    // Initialize Hugging Face API key
-    const huggingFaceKey = localStorage.getItem('huggingface_api_key') || '';
-    window.HUGGINGFACE_API_KEY = huggingFaceKey;
-    console.log('Hugging Face API Key initialized:', huggingFaceKey ? 'Key is set (masked)' : 'No key found');
-    
-    // Initialize DeepSeek API key
-    const deepSeekKey = localStorage.getItem('deepseek_api_key') || '';
-    window.DEEPSEEK_API_KEY = deepSeekKey;
-    
-    // Initialize Grok API key
-    const grokKey = localStorage.getItem('grok_api_key') || '';
-    window.GROK_API_KEY = grokKey;
-    
+    // Removed all code that loads API keys from localStorage
+
     // Import predefined API keys if none are stored yet
     importPredefinedAPIKeys();
-    
+
     // Initialize model selection grid
     initializeModelsGrid();
-    
+
     // Initialize sidebar toggle functionality
     initSidebar();
-    
+
     // Initialize dark mode toggle
     initDarkMode();
-    
+
     // Initialize conversation history
     updateConversationHistory();
-    
+
     // Initialize clear conversations button
     initClearConversations();
-    
+
     // Initialize Manage API button
     initManageAPI();
-    
+
     // Initialize about modal
     initAboutModal();
-    
+
     // Initialize emoji picker
     initEmojiPicker();
-    
+
     // Initialize voice input
     initVoiceInput();
-    
+
     // Show app loader initially and hide after loading
     showLoader(false);
 });
@@ -64,30 +48,30 @@ function initSidebar() {
     const closeSidebarBtn = document.getElementById('close-sidebar');
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
-    
+
     menuBtn.addEventListener('click', () => {
         toggleSidebar();
     });
-    
+
     closeSidebarBtn.addEventListener('click', () => {
         toggleSidebar();
     });
-    
+
     // Close sidebar when clicking outside on mobile
     document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 && 
-            sidebar.classList.contains('open') && 
-            !sidebar.contains(e.target) && 
+        if (window.innerWidth <= 768 &&
+            sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) &&
             e.target !== menuBtn) {
             toggleSidebar();
         }
     });
-    
+
     // Function to toggle sidebar visibility without automatically closing
-    window.toggleSidebar = function(forceState = null) {
+    window.toggleSidebar = function (forceState = null) {
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.querySelector('.main-content');
-        
+
         if (forceState === true) {
             // Force open
             sidebar.classList.add('open');
@@ -98,8 +82,8 @@ function initSidebar() {
             mainContent.classList.remove('sidebar-open');
         } else {
             // Toggle
-        sidebar.classList.toggle('open');
-        mainContent.classList.toggle('sidebar-open');
+            sidebar.classList.toggle('open');
+            mainContent.classList.toggle('sidebar-open');
         }
     };
 }
@@ -107,16 +91,16 @@ function initSidebar() {
 // Function to initialize dark mode toggle
 function initDarkMode() {
     const darkModeToggle = document.getElementById('dark-mode-toggle');
-    
+
     // Check if dark mode is enabled in localStorage
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    
+
     // Set initial state
     if (isDarkMode) {
         document.body.classList.add('dark-mode');
         darkModeToggle.checked = true;
     }
-    
+
     // Toggle dark mode when the switch is clicked
     darkModeToggle.addEventListener('change', () => {
         if (darkModeToggle.checked) {
@@ -133,7 +117,7 @@ function initDarkMode() {
 function initClearConversations() {
     // Use a more specific selector that targets the Clear All Chats text
     const clearChatsBtn = document.querySelector('.setting-item i.fa-trash').parentElement;
-    
+
     clearChatsBtn.addEventListener('click', () => {
         showChatDeletionModal();
     });
@@ -142,7 +126,7 @@ function initClearConversations() {
 // Function to initialize Manage API button
 function initManageAPI() {
     const manageAPIBtn = document.getElementById('manage-api-btn');
-    
+
     manageAPIBtn.addEventListener('click', () => {
         storeApiKey();
     });
@@ -154,15 +138,15 @@ function initAboutModal() {
     const aboutBtn = document.querySelector('.setting-item i.fa-info-circle').parentElement;
     const modal = document.getElementById('about-modal');
     const closeModal = document.querySelector('.close-modal');
-    
+
     aboutBtn.addEventListener('click', () => {
         modal.style.display = 'flex';
     });
-    
+
     closeModal.addEventListener('click', () => {
         modal.style.display = 'none';
     });
-    
+
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -176,11 +160,11 @@ function initEmojiPicker() {
     const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
     const emojiBtns = document.querySelectorAll('.emoji-btn');
-    
+
     emojiBtn.addEventListener('click', () => {
         emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
     });
-    
+
     emojiBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const emoji = btn.textContent;
@@ -190,11 +174,11 @@ function initEmojiPicker() {
             emojiPicker.style.display = 'none';
         });
     });
-    
+
     // Close emoji picker when clicking elsewhere
     document.addEventListener('click', (e) => {
-        if (emojiPicker.style.display !== 'none' && 
-            !emojiPicker.contains(e.target) && 
+        if (emojiPicker.style.display !== 'none' &&
+            !emojiPicker.contains(e.target) &&
             e.target !== emojiBtn) {
             emojiPicker.style.display = 'none';
         }
@@ -204,18 +188,18 @@ function initEmojiPicker() {
 // Function to initialize voice input
 function initVoiceInput() {
     const voiceBtn = document.getElementById('voice-input-btn');
-    
+
     // Check if browser supports speech recognition
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
-        
+
         recognition.continuous = false;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
-        
+
         let isRecording = false;
-        
+
         voiceBtn.addEventListener('click', () => {
             if (isRecording) {
                 recognition.stop();
@@ -227,21 +211,21 @@ function initVoiceInput() {
                 isRecording = true;
             }
         });
-        
+
         recognition.onresult = (event) => {
             const transcript = Array.from(event.results)
                 .map(result => result[0])
                 .map(result => result.transcript)
                 .join('');
-                
+
             document.getElementById('message-input').value = transcript;
         };
-        
+
         recognition.onend = () => {
             voiceBtn.classList.remove('recording');
             isRecording = false;
         };
-        
+
         recognition.onerror = (event) => {
             console.error('Speech recognition error', event.error);
             voiceBtn.classList.remove('recording');
@@ -255,29 +239,20 @@ function initVoiceInput() {
 
 // Function to handle API key setup
 function setupApiKey() {
-    // Get the API key from localStorage or prompt the user if not found
-    let apiKey = localStorage.getItem('openrouter_api_key');
-    
-    if (!apiKey) {
-        storeApiKey();
-        return false;
-    }
-    
-    // Set the global API key variable
-    window.OPENROUTER_API_KEY = apiKey;
-    return true;
+    // Removed all code that loads API keys from localStorage
+    return false;
 }
 
 // Function to store and manage API keys
 function storeApiKey() {
     // Create a modal for storing API key
     let storeKeyModal = document.getElementById('store-key-modal');
-    
+
     if (!storeKeyModal) {
         storeKeyModal = document.createElement('div');
         storeKeyModal.id = 'store-key-modal';
         storeKeyModal.className = 'modal';
-        
+
         storeKeyModal.innerHTML = `
             <div class="modal-content store-key-content">
                 <span class="close-modal" id="close-store-modal">&times;</span>
@@ -341,21 +316,21 @@ function storeApiKey() {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(storeKeyModal);
-        
+
         // Add event listeners for the new modal
         document.getElementById('close-store-modal').addEventListener('click', () => {
             storeKeyModal.style.display = 'none';
         });
-        
+
         // Update API provider link when dropdown changes
         document.getElementById('api-provider-select').addEventListener('change', (e) => {
             const provider = e.target.value;
             const noteElement = document.querySelector('.api-key-note');
-            
+
             // Change the provider link and text based on selection
-            switch(provider) {
+            switch (provider) {
                 case 'openrouter':
                     noteElement.innerHTML = '<i class="fas fa-info-circle"></i> You can get an API key from <a href="https://openrouter.ai" target="_blank">OpenRouter.ai</a>';
                     break;
@@ -377,7 +352,7 @@ function storeApiKey() {
                 default:
                     noteElement.innerHTML = '<i class="fas fa-info-circle"></i> Enter your API key from your provider';
             }
-            
+
             // Auto-fill the name field if empty
             const nameField = document.getElementById('api-key-name-input');
             if (!nameField.value.trim()) {
@@ -385,16 +360,16 @@ function storeApiKey() {
                 nameField.value = providerName;
             }
         });
-        
+
         document.getElementById('save-store-api-key').addEventListener('click', () => {
             const newApiKey = document.getElementById('store-api-key-input').value.trim();
             const keyName = document.getElementById('api-key-name-input').value.trim() || 'Unnamed Key';
             const provider = document.getElementById('api-provider-select').value;
-            
+
             if (newApiKey) {
                 // Get existing keys
                 let storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
-                
+
                 // Add new key
                 storedKeys.push({
                     name: keyName,
@@ -402,10 +377,10 @@ function storeApiKey() {
                     provider: provider,
                     date: new Date().toISOString()
                 });
-                
+
                 // Save back to localStorage
                 localStorage.setItem('stored_api_keys', JSON.stringify(storedKeys));
-                
+
                 // Set as default key for its provider
                 if (provider === 'huggingface') {
                     localStorage.setItem('huggingface_api_key', newApiKey);
@@ -421,11 +396,11 @@ function storeApiKey() {
                     localStorage.setItem('openrouter_api_key', newApiKey);
                     window.OPENROUTER_API_KEY = newApiKey;
                 }
-                
+
                 // Close modal and show success message
                 storeKeyModal.style.display = 'none';
                 showToast(`API key "${keyName}" stored successfully`);
-                
+
                 // Update manager tab if open
                 updateStoredKeysDisplay();
             } else {
@@ -434,23 +409,23 @@ function storeApiKey() {
                 inputField.classList.add('input-error');
                 inputField.addEventListener('input', () => {
                     inputField.classList.remove('input-error');
-                }, {once: true});
-                
+                }, { once: true });
+
                 showToast('Please enter a valid API key');
             }
         });
-        
+
         document.getElementById('cancel-store-api-key').addEventListener('click', () => {
             storeKeyModal.style.display = 'none';
         });
-        
+
         // Close modal when clicking outside
         storeKeyModal.addEventListener('click', (e) => {
             if (e.target === storeKeyModal) {
                 storeKeyModal.style.display = 'none';
             }
         });
-        
+
         // Set up tab switching
         const tabs = storeKeyModal.querySelectorAll('.tab');
         tabs.forEach(tab => {
@@ -458,52 +433,46 @@ function storeApiKey() {
                 // Remove active class from all tabs and contents
                 storeKeyModal.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 storeKeyModal.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 // Add active class to clicked tab and corresponding content
                 tab.classList.add('active');
                 const tabId = tab.getAttribute('data-tab');
                 storeKeyModal.querySelector(`#${tabId}-tab`).classList.add('active');
-                
+
                 // If switching to manage keys tab, update the display
                 if (tabId === 'manage-keys') {
                     updateStoredKeysDisplay();
                 }
             });
         });
-        
+
         // Function to update the stored keys display
-        window.updateStoredKeysDisplay = function() {
+        window.updateStoredKeysDisplay = function () {
             const keysList = document.getElementById('stored-keys-list');
             const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
-            
+
             if (storedKeys.length === 0) {
                 keysList.innerHTML = `<div class="empty-keys-msg">No API keys stored yet.</div>`;
                 return;
             }
-            
+
             let keysHTML = '';
             storedKeys.forEach((keyObj, index) => {
                 // Mask the API key for display
                 const maskedKey = keyObj.key.substring(0, 5) + '...' + keyObj.key.substring(keyObj.key.length - 5);
-                
+
                 // Check if this key is currently active based on its provider
                 let isActive = false;
                 if (keyObj.provider === 'openrouter') {
-                    isActive = keyObj.key === localStorage.getItem('openrouter_api_key');
-                } else if (keyObj.provider === 'deepseek') {
-                    isActive = keyObj.key === localStorage.getItem('deepseek_api_key');
-                } else if (keyObj.provider === 'huggingface') {
-                    isActive = keyObj.key === localStorage.getItem('huggingface_api_key');
-                } else if (keyObj.provider === 'grok') {
-                    isActive = keyObj.key === localStorage.getItem('grok_api_key');
+                    // Removed isActive checks for API keys from localStorage
                 }
-                
+
                 // Get provider icon
                 const providerIcon = getProviderIcon(keyObj.provider || 'other');
-                
+
                 // Format date if available
                 const dateString = keyObj.date ? new Date(keyObj.date).toLocaleDateString() : 'N/A';
-                
+
                 keysHTML += `
                     <div class="stored-key-item ${isActive ? 'active-key' : ''}">
                         <div class="key-info">
@@ -521,9 +490,9 @@ function storeApiKey() {
                     </div>
                 `;
             });
-            
+
             keysList.innerHTML = keysHTML;
-            
+
             // Add event listeners for Apply buttons
             document.querySelectorAll('.apply-key-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -531,7 +500,7 @@ function storeApiKey() {
                     showModelSelectionForKey(index);
                 });
             });
-            
+
             // Add event listeners for Delete buttons
             document.querySelectorAll('.delete-key-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -540,56 +509,31 @@ function storeApiKey() {
                 });
             });
         };
-        
+
         // Function to delete a stored API key
-        window.deleteStoredKey = function(keyIndex) {
+        window.deleteStoredKey = function (keyIndex) {
             const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
             if (keyIndex < 0 || keyIndex >= storedKeys.length) return;
-            
+
             const keyToDelete = storedKeys[keyIndex];
-            
+
             // Confirm deletion
             if (confirm(`Are you sure you want to delete the key "${keyToDelete.name}"?`)) {
-                // Check if this key is a default for its provider
-                let isDefault = false;
-                
-                // Check if the key is default for its specific provider
-                if (keyToDelete.provider === 'huggingface' && 
-                    localStorage.getItem('huggingface_api_key') === keyToDelete.key) {
-                    localStorage.removeItem('huggingface_api_key');
-                    window.HUGGINGFACE_API_KEY = '';
-                    isDefault = true;
-                } else if (keyToDelete.provider === 'deepseek' && 
-                    localStorage.getItem('deepseek_api_key') === keyToDelete.key) {
-                    localStorage.removeItem('deepseek_api_key');
-                    window.DEEPSEEK_API_KEY = '';
-                    isDefault = true;
-                } else if (keyToDelete.provider === 'grok' && 
-                    localStorage.getItem('grok_api_key') === keyToDelete.key) {
-                    localStorage.removeItem('grok_api_key');
-                    window.GROK_API_KEY = '';
-                    isDefault = true;
-                } else if (localStorage.getItem('openrouter_api_key') === keyToDelete.key) {
-                    localStorage.removeItem('openrouter_api_key');
-                    window.OPENROUTER_API_KEY = '';
-                    isDefault = true;
-                }
-                
                 // Remove key from storage
                 storedKeys.splice(keyIndex, 1);
                 localStorage.setItem('stored_api_keys', JSON.stringify(storedKeys));
-                
+
                 // Remove any model-specific assignments of this key
                 Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('model_specific_key_') && 
+                    if (key.startsWith('model_specific_key_') &&
                         localStorage.getItem(key) === keyToDelete.key) {
                         localStorage.removeItem(key);
                     }
                 });
-                
+
                 // Update the display
                 updateStoredKeysDisplay();
-                
+
                 // Show toast message
                 if (isDefault) {
                     showToast(`Deleted default API key "${keyToDelete.name}"`);
@@ -598,22 +542,22 @@ function storeApiKey() {
                 }
             }
         };
-        
+
         // Function to show model selection modal for applying key
-        window.showModelSelectionForKey = function(keyIndex) {
+        window.showModelSelectionForKey = function (keyIndex) {
             const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
             if (keyIndex < 0 || keyIndex >= storedKeys.length) return;
-            
+
             const keyToApply = storedKeys[keyIndex];
-            
+
             // Create modal for model selection
             let modelSelectionModal = document.getElementById('model-selection-modal');
-            
+
             if (!modelSelectionModal) {
                 modelSelectionModal = document.createElement('div');
                 modelSelectionModal.id = 'model-selection-modal';
                 modelSelectionModal.className = 'modal';
-                
+
                 modelSelectionModal.innerHTML = `
                     <div class="modal-content">
                         <span class="close-modal" id="close-model-selection-modal">&times;</span>
@@ -652,55 +596,55 @@ function storeApiKey() {
                         </div>
                     </div>
                 `;
-                
+
                 document.body.appendChild(modelSelectionModal);
-                
+
                 // Add event listeners
                 document.getElementById('close-model-selection-modal').addEventListener('click', () => {
                     modelSelectionModal.style.display = 'none';
                 });
-                
+
                 document.getElementById('cancel-model-selection').addEventListener('click', () => {
                     modelSelectionModal.style.display = 'none';
                 });
-                
+
                 // Select all models
                 document.getElementById('select-all-models').addEventListener('click', () => {
                     document.querySelectorAll('.model-checkbox').forEach(checkbox => {
                         checkbox.checked = true;
                     });
                 });
-                
+
                 // Deselect all models
                 document.getElementById('deselect-all-models').addEventListener('click', () => {
                     document.querySelectorAll('.model-checkbox').forEach(checkbox => {
                         checkbox.checked = false;
                     });
                 });
-                
+
                 // Apply to selected models
                 document.getElementById('apply-to-selected-models').addEventListener('click', () => {
                     const selectedModels = document.querySelectorAll('.model-checkbox:checked');
                     const modelIds = Array.from(selectedModels).map(checkbox => checkbox.value);
-                    
+
                     if (modelIds.length === 0) {
                         showToast('No models selected');
                         return;
                     }
-                    
+
                     // Get the key index from the dataset
                     const keyIndex = parseInt(modelSelectionModal.dataset.keyIndex);
                     applyKeyToSelectedModels(keyIndex, modelIds);
                     modelSelectionModal.style.display = 'none';
                 });
-                
+
                 // Apply as default for provider
                 document.getElementById('apply-to-all-models').addEventListener('click', () => {
                     const keyIndex = parseInt(modelSelectionModal.dataset.keyIndex);
                     applyStoredKey(keyIndex);
                     modelSelectionModal.style.display = 'none';
                 });
-                
+
                 // Close when clicking outside
                 modelSelectionModal.addEventListener('click', (e) => {
                     if (e.target === modelSelectionModal) {
@@ -708,28 +652,28 @@ function storeApiKey() {
                     }
                 });
             }
-            
+
             // Set active key
             modelSelectionModal.dataset.keyIndex = keyIndex;
             document.querySelector('.highlighted-key-name').textContent = keyToApply.name;
-            
+
             // Populate the models list
             populateModelSelectionList(keyToApply);
-            
+
             // Show the modal
             modelSelectionModal.style.display = 'flex';
         };
-        
+
         // Function to populate the model selection list
-        window.populateModelSelectionList = function(keyObj) {
+        window.populateModelSelectionList = function (keyObj) {
             const modelsContainer = document.getElementById('models-selection-list');
             let modelsHTML = '';
-            
+
             availableModels.forEach(model => {
                 // Check if model already uses this specific key
                 const modelSpecificKey = localStorage.getItem(`model_specific_key_${model.id}`);
                 const isActive = modelSpecificKey === keyObj.key;
-                
+
                 // Only show relevant models for this key type
                 let shouldShow = true;
                 if (keyObj.provider === 'huggingface' && model.provider !== 'huggingface') {
@@ -739,7 +683,7 @@ function storeApiKey() {
                 } else if (keyObj.provider === 'grok' && model.provider !== 'grok') {
                     shouldShow = false;
                 }
-                
+
                 if (shouldShow) {
                     modelsHTML += `
                         <div class="model-selection-item ${isActive ? 'active-model' : ''}">
@@ -757,36 +701,36 @@ function storeApiKey() {
                     `;
                 }
             });
-            
+
             if (modelsHTML === '') {
                 modelsHTML = `<p class="empty-models-msg">No compatible models found for this API key type.</p>`;
             }
-            
+
             modelsContainer.innerHTML = modelsHTML;
         };
-        
+
         // Function to apply key to specific models
-        window.applyKeyToSelectedModels = function(keyIndex, modelIds) {
+        window.applyKeyToSelectedModels = function (keyIndex, modelIds) {
             const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
             if (keyIndex < 0 || keyIndex >= storedKeys.length) return;
-            
+
             const keyToApply = storedKeys[keyIndex];
-            
+
             // Apply the key to each selected model
             modelIds.forEach(modelId => {
                 localStorage.setItem(`model_specific_key_${modelId}`, keyToApply.key);
             });
-            
+
             showToast(`Applied ${keyToApply.name} to ${modelIds.length} model(s)`);
         };
-        
+
         // Function to apply stored key as default for its provider
-        window.applyStoredKey = function(keyIndex) {
+        window.applyStoredKey = function (keyIndex) {
             const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
             if (keyIndex < 0 || keyIndex >= storedKeys.length) return;
-            
+
             const keyToApply = storedKeys[keyIndex];
-            
+
             // Set as default key for its provider
             if (keyToApply.provider === 'huggingface') {
                 localStorage.setItem('huggingface_api_key', keyToApply.key);
@@ -802,13 +746,13 @@ function storeApiKey() {
                 localStorage.setItem('openrouter_api_key', keyToApply.key);
                 window.OPENROUTER_API_KEY = keyToApply.key;
             }
-            
+
             // Update the stored keys display to reflect the change
             updateStoredKeysDisplay();
-            
+
             showToast(`Set ${keyToApply.name} as default for ${keyToApply.provider} models`);
         };
-        
+
         // Function to get provider icon
         function getProviderIcon(provider) {
             const icons = {
@@ -823,11 +767,11 @@ function storeApiKey() {
             return icons[provider] || icons.other;
         }
     }
-    
+
     // Show the 'Manage Keys' tab by default
     const manageTab = storeKeyModal.querySelector('.tab[data-tab="manage-keys"]');
     manageTab.click();
-    
+
     // Show the modal
     storeKeyModal.style.display = 'flex';
 }
@@ -836,22 +780,22 @@ function storeApiKey() {
 function showToast(message) {
     // Check if toast container exists
     let toastContainer = document.getElementById('toast-container');
-    
+
     if (!toastContainer) {
         // Create toast container if it doesn't exist
         toastContainer = document.createElement('div');
         toastContainer.id = 'toast-container';
         document.body.appendChild(toastContainer);
     }
-    
+
     // Create new toast
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
-    
+
     // Add toast to container
     toastContainer.appendChild(toast);
-    
+
     // Remove toast after animation
     setTimeout(() => {
         toast.classList.add('fade-out');
@@ -866,60 +810,60 @@ function importPredefinedAPIKeys() {
     // Only run this if there are no stored keys yet
     const existingKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
     if (existingKeys.length > 0) return;
-    
+
     console.log('Importing predefined API keys...');
-    
+
     // Predefined API keys
     const predefinedKeys = [
         {
             name: 'OpenRouter',
-            key: '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',
+            key: '',
             provider: 'openrouter',
             date: new Date().toISOString()
         },
         {
             name: 'DeepSeek',
-            key: 'sk-ab0bffae66b8447599e6b7369a30daf6',
+            key: '',
             provider: 'deepseek',
             date: new Date().toISOString()
         },
         {
             name: 'Cohere',
-            key: 'KnosnV7zaKxoBzG7V9XiBqeompq84dT5znmo1n5A',
+            key: '',
             provider: 'other',
             date: new Date().toISOString()
         },
         {
             name: 'Grok',
-            key: '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',
+            key: '',
             provider: 'other',
             date: new Date().toISOString()
         },
         {
             name: 'Hugging Face',
-            key: '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',
+            key: '',
             provider: 'huggingface',
             date: new Date().toISOString()
         }
     ];
-    
+
     // Store API keys in localStorage
     localStorage.setItem('stored_api_keys', JSON.stringify(predefinedKeys));
-    
+
     // Set the OpenRouter API key as the default active key
     const openRouterKey = predefinedKeys.find(k => k.provider === 'openrouter');
     if (openRouterKey) {
         localStorage.setItem('openrouter_api_key', openRouterKey.key);
         window.OPENROUTER_API_KEY = openRouterKey.key;
     }
-    
+
     // Also set Hugging Face API key for image generation
     const huggingFaceKey = predefinedKeys.find(k => k.provider === 'huggingface');
     if (huggingFaceKey) {
         localStorage.setItem('huggingface_api_key', huggingFaceKey.key);
         window.HUGGINGFACE_API_KEY = huggingFaceKey.key;
     }
-    
+
     console.log('Predefined API keys imported successfully');
     showToast('API keys imported successfully');
 }
@@ -928,12 +872,12 @@ function importPredefinedAPIKeys() {
 function showChatDeletionModal() {
     // Create modal for deleting specific chats
     let deletionModal = document.getElementById('chat-deletion-modal');
-    
+
     if (!deletionModal) {
         deletionModal = document.createElement('div');
         deletionModal.id = 'chat-deletion-modal';
         deletionModal.className = 'modal';
-        
+
         deletionModal.innerHTML = `
             <div class="modal-content">
                 <span class="close-modal" id="close-deletion-modal">&times;</span>
@@ -962,38 +906,38 @@ function showChatDeletionModal() {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(deletionModal);
-        
+
         // Add event listeners
         document.getElementById('close-deletion-modal').addEventListener('click', () => {
             deletionModal.style.display = 'none';
         });
-        
+
         document.getElementById('cancel-deletion').addEventListener('click', () => {
             deletionModal.style.display = 'none';
         });
-        
+
         document.getElementById('delete-selected-chats').addEventListener('click', () => {
             const selectedChats = document.querySelectorAll('.chat-deletion-item input:checked');
             const chatIds = Array.from(selectedChats).map(checkbox => checkbox.value);
-            
+
             if (chatIds.length === 0) {
                 showToast('No conversations selected');
                 return;
             }
-            
+
             deleteSelectedConversations(chatIds);
             deletionModal.style.display = 'none';
         });
-        
+
         document.getElementById('delete-all-chats').addEventListener('click', () => {
             if (confirm('Are you sure you want to delete ALL conversations? This action cannot be undone.')) {
                 clearAllConversations();
                 deletionModal.style.display = 'none';
             }
         });
-        
+
         // Close when clicking outside
         deletionModal.addEventListener('click', (e) => {
             if (e.target === deletionModal) {
@@ -1001,10 +945,10 @@ function showChatDeletionModal() {
             }
         });
     }
-    
+
     // Populate the chat list
     populateChatDeletionList();
-    
+
     // Show the modal
     deletionModal.style.display = 'flex';
 }
@@ -1013,28 +957,28 @@ function showChatDeletionModal() {
 function populateChatDeletionList() {
     const chatListContainer = document.getElementById('deletion-chat-list');
     const keys = Object.keys(localStorage).filter(key => key.startsWith('chat_'));
-    
+
     if (keys.length === 0) {
         chatListContainer.innerHTML = '<p class="empty-chats-msg">No conversations to delete.</p>';
         return;
     }
-    
+
     let chatListHTML = '';
-    
+
     keys.forEach(key => {
         const modelId = key.replace('chat_', '');
         const model = availableModels.find(m => m.id === modelId);
-        
+
         if (model) {
             const isCurrentChat = currentModel && currentModel.id === modelId;
             const messages = JSON.parse(localStorage.getItem(key)) || [];
-            const lastMessage = messages.length > 0 ? 
+            const lastMessage = messages.length > 0 ?
                 messages[messages.length - 1].content : 'Empty conversation';
-            
+
             // Truncate last message if too long
-            const truncatedMessage = lastMessage.length > 60 ? 
+            const truncatedMessage = lastMessage.length > 60 ?
                 lastMessage.substring(0, 60) + '...' : lastMessage;
-            
+
             chatListHTML += `
                 <div class="chat-deletion-item ${isCurrentChat ? 'current-chat' : ''}">
                     <input type="checkbox" id="chat-${modelId}" value="${key}" class="chat-checkbox">
@@ -1050,26 +994,26 @@ function populateChatDeletionList() {
             `;
         }
     });
-    
+
     chatListContainer.innerHTML = chatListHTML;
 }
 
 // Function to delete selected conversations
 function deleteSelectedConversations(chatKeys) {
     if (!chatKeys || chatKeys.length === 0) return;
-    
+
     chatKeys.forEach(key => {
         localStorage.removeItem(key);
-        
+
         // If this was the current conversation, go back to model selection
         if (currentModel && `chat_${currentModel.id}` === key) {
             backToModelSelection();
         }
     });
-    
+
     // Update the conversation history in the sidebar
     updateConversationHistory();
-    
+
     // Show success toast
     showToast(`${chatKeys.length} conversation(s) deleted`);
 } 
