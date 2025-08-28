@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat App</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Overlay (Initially Hidden) -->
+    <div class="app-loader" id="app-loader" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Menu -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>AI Chat</h2>
+                <button id="close-sidebar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="sidebar-content">
+                <div class="profile-section">
+                    <div class="profile-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3>User Profile</h3>
+                </div>
+                <div class="menu-section">
+                    <h3>Conversations</h3>
+                    <ul id="conversation-history">
+                        <!-- Conversation history will be added here dynamically -->
+                    </ul>
+                </div>
+                <div class="settings-section">
+                    <h3>Settings</h3>
+                    <div class="setting-item">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dark-mode-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <i class="fas fa-trash"></i>
+                        <span>Clear All Chats</span>
+                    </div>
+                    <div class="setting-item" id="manage-api-btn">
+                        <i class="fas fa-key"></i>
+                        <span>Manage API</span>
+                    </div>
+                    <div class="setting-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>About App</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header>
+                <button id="menu-btn"><i class="fas fa-bars"></i></button>
+                <h1>AI Chat App</h1>
+            </header>
+
+            <!-- Home Screen / Model Selection -->
+            <div class="home-screen" id="home-screen">
+                <h2>Select an AI Model</h2>
+                <div class="models-grid" id="models-grid">
+                    <!-- AI models will be loaded here dynamically -->
+                </div>
+            </div>
+
+            <!-- Chat Screen (Initially Hidden) -->
+            <div class="chat-screen" id="chat-screen" style="display: none;">
+                <div class="chat-header">
+                    <button id="back-btn"><i class="fas fa-arrow-left"></i></button>
+                    <div class="model-info">
+                        <div class="model-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h2 id="current-model-name">Chatbot</h2>
+                    </div>
+                    <button id="close-chat"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                <!-- Emoji Picker (Initially Hidden) -->
+                <div class="emoji-picker" id="emoji-picker" style="display: none;">
+                    <button class="emoji-btn">😊</button>
+                    <button class="emoji-btn">😂</button>
+                    <button class="emoji-btn">👍</button>
+                    <button class="emoji-btn">❤️</button>
+                    <button class="emoji-btn">🎉</button>
+                    <button class="emoji-btn">🤔</button>
+                    <button class="emoji-btn">👀</button>
+                    <button class="emoji-btn">🙏</button>
+                </div>
+                <div class="chat-input">
+                    <button class="voice-input-btn" id="voice-input-btn">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <textarea id="message-input" placeholder="Enter a message..."></textarea>
+                    <button id="emoji-btn">
+                        <i class="fas fa-smile"></i>
+                    </button>
+                    <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal (Initially Hidden) -->
+    <div id="about-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>About AI Chat App</h2>
+            <p>Version 1.0.0</p>
+            <p>A feature-rich chat application that allows you to interact with various AI models through inteligence.</p>
+            <p>Hand crafter and made with ❤️.</p>
+            <div class="modal-footer">
+                <p>© 2023 AI Chat App</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./app.js"></script>
+    <script src="./models.js"></script>
+    <script src="./chat.js"></script>
+</body>
+</html> 
