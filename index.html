@@ -122,6 +122,26 @@
                     <button class="emoji-btn">👀</button>
                     <button class="emoji-btn">🙏</button>
                 </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions" id="quick-actions">
+                    <button class="quick-action-btn" data-action="summarize" title="Summarize">
+                        <i class="fas fa-align-left"></i> Summarize
+                    </button>
+                    <button class="quick-action-btn" data-action="explain" title="Explain Simply">
+                        <i class="fas fa-lightbulb"></i> Explain
+                    </button>
+                    <button class="quick-action-btn" data-action="translate" title="Translate">
+                        <i class="fas fa-language"></i> Translate
+                    </button>
+                    <button class="quick-action-btn" data-action="code" title="Format as Code">
+                        <i class="fas fa-code"></i> Code It
+                    </button>
+                    <button class="quick-action-btn" data-action="custom" title="Custom Templates">
+                        <i class="fas fa-save"></i> Templates
+                    </button>
+                </div>
+                
                 <div class="chat-input">
                     <button class="voice-input-btn" id="voice-input-btn">
                         <i class="fas fa-microphone"></i>
@@ -266,6 +286,24 @@
             </div>
             <div class="modal-actions">
                 <button id="reset-stats-btn" class="btn-secondary">Reset Stats</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Templates Modal -->
+    <div id="templates-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Quick Templates</h2>
+            <div class="form-group">
+                <label>Create New Template</label>
+                <input type="text" id="template-name-input" placeholder="Template name (e.g., Bug Report)" class="full-width-input">
+                <textarea id="template-content-input" placeholder="Template content with {input} placeholder" rows="4" class="full-width-input" style="margin-top: 10px;"></textarea>
+                <button id="save-template-btn" class="btn-primary" style="margin-top: 10px;">Save Template</button>
+            </div>
+            <h3>Saved Templates</h3>
+            <div id="templates-list">
+                <!-- Saved templates will appear here -->
             </div>
         </div>
     </div>

@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize token usage tracking
     initTokenUsage();
 
+    // Initialize quick actions
+    initQuickActions();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -2005,4 +2008,167 @@ function updateTokenStats() {
 }
 
 // Export function to be used by chat.js
-window.trackTokenUsage = trackTokenUsage; 
+window.trackTokenUsage = trackTokenUsage;
+
+// Initialize quick actions
+function initQuickActions() {
+    const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+    const messageInput = document.getElementById('message-input');
+    const templatesModal = document.getElementById('templates-modal');
+    
+    quickActionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            handleQuickAction(action, messageInput);
+        });
+    });
+    
+    // Setup templates modal
+    if (templatesModal) {
+        const closeBtn = templatesModal.querySelector('.close-modal');
+        const saveTemplateBtn = document.getElementById('save-template-btn');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                templatesModal.style.display = 'none';
+            });
+        }
+        
+        if (saveTemplateBtn) {
+            saveTemplateBtn.addEventListener('click', saveCustomTemplate);
+        }
+        
+        templatesModal.addEventListener('click', (e) => {
+            if (e.target === templatesModal) {
+                templatesModal.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Handle quick action
+function handleQuickAction(action, messageInput) {
+    const currentText = messageInput.value.trim();
+    
+    const actions = {
+        summarize: `Summarize the following in 3-5 bullet points:\n\n${currentText || '[Last conversation]'}`,
+        explain: `Explain the following in simple terms that a beginner can understand:\n\n${currentText || '[Last conversation]'}`,
+        translate: `Translate the following text to ${currentText ? 'Hindi' : 'English'}:\n\n${currentText || '[Last message]'}`,
+        code: `Convert the following into working code with proper formatting:\n\n${currentText || '[Description]'}`,
+        custom: null // Opens templates modal
+    };
+    
+    if (action === 'custom') {
+        document.getElementById('templates-modal').style.display = 'flex';
+        loadCustomTemplates();
+        return;
+    }
+    
+    if (actions[action]) {
+        messageInput.value = actions[action];
+        messageInput.style.height = 'auto';
+        messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+        messageInput.focus();
+        
+        // Move cursor to placeholder area
+        const placeholderStart = messageInput.value.indexOf('[');
+        if (placeholderStart > -1) {
+            messageInput.setSelectionRange(placeholderStart, messageInput.value.indexOf(']') + 1);
+        }
+    }
+}
+
+// Save custom template
+function saveCustomTemplate() {
+    const nameInput = document.getElementById('template-name-input');
+    const contentInput = document.getElementById('template-content-input');
+    
+    const name = nameInput.value.trim();
+    const content = contentInput.value.trim();
+    
+    if (!name || !content) {
+        showToast('Please enter both template name and content');
+        return;
+    }
+    
+    const templates = JSON.parse(localStorage.getItem('quick_templates')) || [];
+    templates.push({
+        id: Date.now(),
+        name,
+        content
+    });
+    
+    localStorage.setItem('quick_templates', JSON.stringify(templates));
+    
+    nameInput.value = '';
+    contentInput.value = '';
+    
+    loadCustomTemplates();
+    showToast('Template saved');
+}
+
+// Load custom templates
+function loadCustomTemplates() {
+    const templatesList = document.getElementById('templates-list');
+    const templates = JSON.parse(localStorage.getItem('quick_templates')) || [];
+    
+    templatesList.innerHTML = '';
+    
+    if (templates.length === 0) {
+        templatesList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No templates saved yet. Create one above!</p>';
+        return;
+    }
+    
+    templates.forEach(template => {
+        const item = document.createElement('div');
+        item.className = 'template-item';
+        
+        const info = document.createElement('div');
+        info.innerHTML = `
+            <div class="template-name">${template.name}</div>
+            <div class="template-preview">${template.content.substring(0, 50)}...</div>
+        `;
+        
+        const actions = document.createElement('div');
+        actions.className = 'template-actions';
+        
+        const useBtn = document.createElement('button');
+        useBtn.className = 'template-action-btn';
+        useBtn.textContent = 'Use';
+        useBtn.addEventListener('click', () => {
+            const messageInput = document.getElementById('message-input');
+            const userInput = prompt('Enter value for {input} placeholder:', '');
+            if (userInput !== null) {
+                messageInput.value = template.content.replace('{input}', userInput);
+                document.getElementById('templates-modal').style.display = 'none';
+                messageInput.focus();
+            }
+        });
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'template-action-btn delete';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => {
+            deleteCustomTemplate(template.id);
+        });
+        
+        actions.appendChild(useBtn);
+        actions.appendChild(deleteBtn);
+        
+        item.appendChild(info);
+        item.appendChild(actions);
+        
+        templatesList.appendChild(item);
+    });
+}
+
+// Delete custom template
+function deleteCustomTemplate(templateId) {
+    if (confirm('Delete this template?')) {
+        let templates = JSON.parse(localStorage.getItem('quick_templates')) || [];
+        templates = templates.filter(t => t.id !== templateId);
+        localStorage.setItem('quick_templates', JSON.stringify(templates));
+        loadCustomTemplates();
+        showToast('Template deleted');
+    }
+} 

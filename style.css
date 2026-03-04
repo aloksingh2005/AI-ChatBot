@@ -2299,4 +2299,100 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 5px;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 15px;
+    background-color: var(--message-bg);
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.quick-action-btn {
+    padding: 8px 14px;
+    background-color: var(--chat-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.quick-action-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(133, 87, 255, 0.3);
+}
+
+.quick-action-btn i {
+    font-size: 14px;
+}
+
+#templates-list {
+    max-height: 250px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.template-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--chat-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.template-name {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.template-preview {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.template-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.template-action-btn {
+    padding: 6px 10px;
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-action-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.template-action-btn.delete:hover {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
 } 
