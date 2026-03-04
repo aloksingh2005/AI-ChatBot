@@ -105,6 +105,11 @@ async function sendMessage() {
         // Save the updated conversation to localStorage
         saveConversation();
         
+        // Track token usage
+        if (typeof window.trackTokenUsage === 'function') {
+            window.trackTokenUsage(currentModel.id, message, response);
+        }
+        
         // Update the conversation history in the sidebar
         updateConversationHistory();
         

@@ -51,6 +51,10 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
+                    <div class="setting-item" id="token-usage-btn">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Token Usage</span>
+                    </div>
                     <div class="setting-item" id="search-conversations-btn">
                         <i class="fas fa-search"></i>
                         <span>Search Chats</span>
@@ -224,6 +228,44 @@
             <div class="modal-actions">
                 <button id="save-prompt-btn" class="btn-primary">Save</button>
                 <button id="clear-prompt-btn" class="btn-secondary">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Usage Modal -->
+    <div id="token-usage-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Token Usage Statistics</h2>
+            <div class="usage-stats">
+                <div class="stat-card">
+                    <i class="fas fa-comments"></i>
+                    <div class="stat-info">
+                        <div class="stat-value" id="total-messages">0</div>
+                        <div class="stat-label">Total Messages</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-coins"></i>
+                    <div class="stat-info">
+                        <div class="stat-value" id="total-tokens">0</div>
+                        <div class="stat-label">Estimated Tokens</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar"></i>
+                    <div class="stat-info">
+                        <div class="stat-value" id="sessions-count">0</div>
+                        <div class="stat-label">Chat Sessions</div>
+                    </div>
+                </div>
+            </div>
+            <h3>Usage by Model</h3>
+            <div id="model-usage-list" class="model-usage-list">
+                <!-- Model usage breakdown will appear here -->
+            </div>
+            <div class="modal-actions">
+                <button id="reset-stats-btn" class="btn-secondary">Reset Stats</button>
             </div>
         </div>
     </div>

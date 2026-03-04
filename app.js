@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize system prompt customization
     initSystemPrompts();
 
+    // Initialize token usage tracking
+    initTokenUsage();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -1884,4 +1887,122 @@ function setSystemPrompt(modelId, prompt) {
 }
 
 // Export function to be used by chat.js
-window.getSystemPrompt = getSystemPrompt; 
+window.getSystemPrompt = getSystemPrompt;
+
+// Initialize token usage tracking
+function initTokenUsage() {
+    const tokenUsageBtn = document.getElementById('token-usage-btn');
+    const modal = document.getElementById('token-usage-modal');
+    const closeBtn = modal.querySelector('.close-modal');
+    const resetBtn = document.getElementById('reset-stats-btn');
+    
+    if (tokenUsageBtn) {
+        tokenUsageBtn.addEventListener('click', () => {
+            updateTokenStats();
+            modal.style.display = 'flex';
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Reset all token usage statistics? This cannot be undone.')) {
+                localStorage.removeItem('token_usage_stats');
+                updateTokenStats();
+                showToast('Token stats reset');
+            }
+        });
+    }
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+// Estimate tokens from text (rough approximation: ~4 chars per token)
+function estimateTokens(text) {
+    if (!text) return 0;
+    return Math.ceil(text.length / 4);
+}
+
+// Track token usage for a message exchange
+function trackTokenUsage(modelId, userMessage, aiResponse) {
+    const stats = JSON.parse(localStorage.getItem('token_usage_stats')) || {
+        totalMessages: 0,
+        totalTokens: 0,
+        models: {}
+    };
+    
+    const userTokens = estimateTokens(userMessage);
+    const aiTokens = estimateTokens(aiResponse);
+    const totalTokens = userTokens + aiTokens;
+    
+    stats.totalMessages += 2; // User + AI message
+    stats.totalTokens += totalTokens;
+    
+    if (!stats.models[modelId]) {
+        stats.models[modelId] = {
+            messages: 0,
+            tokens: 0
+        };
+    }
+    
+    stats.models[modelId].messages += 2;
+    stats.models[modelId].tokens += totalTokens;
+    
+    localStorage.setItem('token_usage_stats', JSON.stringify(stats));
+}
+
+// Update token stats display
+function updateTokenStats() {
+    const stats = JSON.parse(localStorage.getItem('token_usage_stats')) || {
+        totalMessages: 0,
+        totalTokens: 0,
+        models: {}
+    };
+    
+    // Count active chat sessions
+    const chatKeys = Object.keys(localStorage).filter(key => key.startsWith('chat_'));
+    
+    // Update summary stats
+    document.getElementById('total-messages').textContent = stats.totalMessages.toLocaleString();
+    document.getElementById('total-tokens').textContent = stats.totalTokens.toLocaleString();
+    document.getElementById('sessions-count').textContent = chatKeys.length;
+    
+    // Update model breakdown
+    const modelUsageList = document.getElementById('model-usage-list');
+    modelUsageList.innerHTML = '';
+    
+    if (Object.keys(stats.models).length === 0) {
+        modelUsageList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No usage data yet. Start chatting to track tokens!</p>';
+        return;
+    }
+    
+    Object.entries(stats.models).forEach(([modelId, data]) => {
+        const model = availableModels.find(m => m.id === modelId);
+        const modelName = model ? model.name : modelId;
+        
+        const item = document.createElement('div');
+        item.className = 'model-usage-item';
+        
+        item.innerHTML = `
+            <div class="model-usage-name">${modelName}</div>
+            <div class="model-usage-stats">
+                <span><i class="fas fa-comments"></i> ${data.messages}</span>
+                <span><i class="fas fa-coins"></i> ${data.tokens.toLocaleString()} tokens</span>
+            </div>
+        `;
+        
+        modelUsageList.appendChild(item);
+    });
+}
+
+// Export function to be used by chat.js
+window.trackTokenUsage = trackTokenUsage; 
