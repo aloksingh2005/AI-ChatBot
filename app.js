@@ -361,6 +361,10 @@ function setupApiKey() {
 function getProviderStorageKey(provider) {
     const normalizedProvider = provider || 'openrouter';
 
+    if (normalizedProvider === 'gemini') {
+        return 'gemini_api_key';
+    }
+
     if (normalizedProvider === 'huggingface') {
         return 'huggingface_api_key';
     }
@@ -378,6 +382,10 @@ function getProviderStorageKey(provider) {
 
 function getProviderWindowKey(provider) {
     const normalizedProvider = provider || 'openrouter';
+
+    if (normalizedProvider === 'gemini') {
+        return 'GEMINI_API_KEY';
+    }
 
     if (normalizedProvider === 'huggingface') {
         return 'HUGGINGFACE_API_KEY';
@@ -423,7 +431,7 @@ window.resolveProviderApiKey = function (provider, modelId = null) {
 };
 
 function hydrateProviderKeysFromStorage() {
-    ['openrouter', 'deepseek', 'huggingface', 'grok'].forEach(provider => {
+    ['openrouter', 'gemini', 'deepseek', 'huggingface', 'grok'].forEach(provider => {
         const key = window.resolveProviderApiKey(provider);
         if (key) {
             const windowKey = getProviderWindowKey(provider);
@@ -461,6 +469,7 @@ function storeApiKey() {
                             <p class="modal-instruction">Select API Provider:</p>
                             <select class="provider-dropdown" id="api-provider-select">
                                 <option value="openrouter">OpenRouter</option>
+                                <option value="gemini">Google Gemini</option>
                                 <option value="deepseek">DeepSeek</option>
                                 <option value="huggingface">Hugging Face</option>
                                 <option value="anthropic">Anthropic</option>
@@ -525,6 +534,9 @@ function storeApiKey() {
                 case 'openrouter':
                     noteElement.innerHTML = '<i class="fas fa-info-circle"></i> You can get an API key from <a href="https://openrouter.ai" target="_blank">OpenRouter.ai</a>';
                     break;
+                case 'gemini':
+                    noteElement.innerHTML = '<i class="fas fa-info-circle"></i> You can get an API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>';
+                    break;
                 case 'deepseek':
                     noteElement.innerHTML = '<i class="fas fa-info-circle"></i> You can get an API key from <a href="https://platform.deepseek.com" target="_blank">DeepSeek Platform</a>';
                     break;
@@ -576,6 +588,9 @@ function storeApiKey() {
                 if (provider === 'huggingface') {
                     localStorage.setItem('huggingface_api_key', newApiKey);
                     window.HUGGINGFACE_API_KEY = newApiKey;
+                } else if (provider === 'gemini') {
+                    localStorage.setItem('gemini_api_key', newApiKey);
+                    window.GEMINI_API_KEY = newApiKey;
                 } else if (provider === 'deepseek') {
                     localStorage.setItem('deepseek_api_key', newApiKey);
                     window.DEEPSEEK_API_KEY = newApiKey;
@@ -886,6 +901,8 @@ function storeApiKey() {
                 let shouldShow = true;
                 if (keyObj.provider === 'huggingface' && model.provider !== 'huggingface') {
                     shouldShow = false;
+                } else if (keyObj.provider === 'gemini' && model.provider !== 'gemini') {
+                    shouldShow = false;
                 } else if (keyObj.provider === 'deepseek' && model.provider !== 'deepseek') {
                     shouldShow = false;
                 } else if (keyObj.provider === 'grok' && model.provider !== 'grok') {
@@ -943,6 +960,9 @@ function storeApiKey() {
             if (keyToApply.provider === 'huggingface') {
                 localStorage.setItem('huggingface_api_key', keyToApply.key);
                 window.HUGGINGFACE_API_KEY = keyToApply.key;
+            } else if (keyToApply.provider === 'gemini') {
+                localStorage.setItem('gemini_api_key', keyToApply.key);
+                window.GEMINI_API_KEY = keyToApply.key;
             } else if (keyToApply.provider === 'deepseek') {
                 localStorage.setItem('deepseek_api_key', keyToApply.key);
                 window.DEEPSEEK_API_KEY = keyToApply.key;
@@ -965,6 +985,7 @@ function storeApiKey() {
         function getProviderIcon(provider) {
             const icons = {
                 'openrouter': '<i class="fas fa-network-wired"></i>',
+                'gemini': '<i class="fas fa-star"></i>',
                 'deepseek': '<i class="fas fa-brain"></i>',
                 'huggingface': '<i class="fas fa-image"></i>',
                 'anthropic': '<i class="fas fa-lightbulb"></i>',

@@ -36,6 +36,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function getFriendlyErrorMessage(error) {
+    const rawMessage = (error && error.message ? error.message : 'Unknown error').toLowerCase();
+
+    if (rawMessage.includes('missing authentication header')) {
+        return 'Selected model ke liye valid API key missing hai. Claude/OpenRouter models ke liye OpenRouter key chahiye, aur Gemini model ke liye Gemini key chahiye.';
+    }
+
+    if (rawMessage.includes('insufficient credits') || rawMessage.includes('never purchased credits')) {
+        return 'OpenRouter key valid hai, lekin is account me credits nahi hain. Manage API me dusri working key select karo ya OpenRouter account me credits add karo: https://openrouter.ai/settings/credits';
+    }
+
+    if (rawMessage.includes('no auth credentials') || rawMessage.includes('api key is required') || rawMessage.includes('unauthorized') || rawMessage.includes('invalid api key')) {
+        return 'API key issue detected. Manage API me sahi key add/select karo, phir same model dubara try karo.';
+    }
+
+    if (rawMessage.includes('timeout') || rawMessage.includes('network')) {
+        return 'Network/timeout issue aaya hai. Thodi der baad retry karo.';
+    }
+
+    return `Sorry, I encountered an error: ${error.message}`;
+}
+
 // Function to send a message
 async function sendMessage() {
     const messageInput = document.getElementById('message-input');
@@ -93,7 +115,11 @@ async function sendMessage() {
         hideTypingIndicator();
         
         // Show error message
-        addMessageToChat('ai', `Sorry, I encountered an error: ${error.message}`);
+        addMessageToChat('ai', getFriendlyErrorMessage(error));
+
+        if (typeof showToast === 'function') {
+            showToast('Request failed. Check API key/credits in Manage API.');
+        }
     }
 }
 
@@ -189,7 +215,9 @@ async function sendToAI(message) {
     }
     
     // Handle different API providers
-    if (currentModel.provider === 'deepseek') {
+    if (currentModel.provider === 'gemini') {
+        return await sendToGemini(message);
+    } else if (currentModel.provider === 'deepseek') {
         return await sendToDeepSeek(message);
     } else if (currentModel.provider === 'grok') {
         return await sendToGrok(message);
@@ -204,6 +232,10 @@ async function sendToAI(message) {
     // Still no key found
     if (!apiKey) {
         throw new Error('No auth credentials found. Please set your API key in settings.');
+    }
+
+    if (apiKey.startsWith('AIza')) {
+        throw new Error('You are using a Gemini API key on an OpenRouter model. Please add/select an OpenRouter key for this model.');
     }
     
     let attempts = 0;
@@ -560,4 +592,57 @@ function addEmojiReaction(emojiCode) {
         // Save the updated conversation to localStorage
         saveConversation();
     }, 1000);
+}
+
+// Function to send request to Google Gemini
+async function sendToGemini(message) {
+    const apiKey = window.resolveProviderApiKey
+        ? window.resolveProviderApiKey('gemini', currentModel.id)
+        : '';
+
+    if (!apiKey) {
+        throw new Error('Gemini API key is required. Please add it in Manage API and select provider as Google Gemini.');
+    }
+
+    const contents = currentConversation.map(msg => ({
+        role: msg.role === 'assistant' || msg.role === 'ai' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+    }));
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1024
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to get response from Gemini';
+
+        try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+            errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.map(part => part.text).join('') || '';
+
+    if (!text.trim()) {
+        throw new Error('Invalid response format from Gemini');
+    }
+
+    return text;
 }

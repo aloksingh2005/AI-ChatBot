@@ -33,7 +33,7 @@ const availableModels = [
         avatar: 'fa-comment-dots',
         description: 'Google\'s advanced model for diverse text tasks',
         maxTokens: 30000,
-        provider: 'openrouter'
+        provider: 'gemini'
     },
     {
         id: 'meta-llama/llama-3-70b-instruct',
