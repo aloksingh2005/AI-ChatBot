@@ -594,6 +594,38 @@ function addEmojiReaction(emojiCode) {
     }, 1000);
 }
 
+async function fetchGeminiModelCandidates(apiKey) {
+    const fallbackModels = [
+        'models/gemini-2.0-flash',
+        'models/gemini-2.0-flash-lite',
+        'models/gemini-1.5-flash-latest',
+        'models/gemini-1.5-pro-latest',
+        'models/gemini-pro'
+    ];
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+        if (!response.ok) {
+            return fallbackModels;
+        }
+
+        const data = await response.json();
+        const models = Array.isArray(data.models) ? data.models : [];
+        const supportedModels = models
+            .filter(model =>
+                model?.name &&
+                Array.isArray(model.supportedGenerationMethods) &&
+                model.supportedGenerationMethods.includes('generateContent') &&
+                model.name.includes('gemini')
+            )
+            .map(model => model.name);
+
+        return supportedModels.length ? supportedModels : fallbackModels;
+    } catch (error) {
+        return fallbackModels;
+    }
+}
+
 // Function to send request to Google Gemini
 async function sendToGemini(message) {
     const apiKey = window.resolveProviderApiKey
@@ -609,40 +641,54 @@ async function sendToGemini(message) {
         parts: [{ text: msg.content }]
     }));
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents,
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1024
+    const modelCandidates = await fetchGeminiModelCandidates(apiKey);
+    const apiVersions = ['v1beta', 'v1'];
+    let lastErrorMessage = 'Failed to get response from Gemini';
+
+    for (const apiVersion of apiVersions) {
+        for (const modelName of modelCandidates) {
+            const response = await fetch(`https://generativelanguage.googleapis.com/${apiVersion}/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents,
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 1024
+                    }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const text = data?.candidates?.[0]?.content?.parts?.map(part => part.text).join('') || '';
+
+                if (text.trim()) {
+                    return text;
+                }
+
+                lastErrorMessage = 'Invalid response format from Gemini';
+                continue;
             }
-        })
-    });
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = 'Failed to get response from Gemini';
+            const errorText = await response.text();
+            try {
+                const errorData = JSON.parse(errorText);
+                lastErrorMessage = errorData.error?.message || lastErrorMessage;
+            } catch (e) {
+                lastErrorMessage = errorText || lastErrorMessage;
+            }
 
-        try {
-            const errorData = JSON.parse(errorText);
-            errorMessage = errorData.error?.message || errorMessage;
-        } catch (e) {
-            errorMessage = errorText || errorMessage;
+            const normalized = (lastErrorMessage || '').toLowerCase();
+            const canTryAnotherModel = normalized.includes('not found') || normalized.includes('not supported for generatecontent');
+
+            if (!canTryAnotherModel) {
+                throw new Error(lastErrorMessage);
+            }
         }
-
-        throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.map(part => part.text).join('') || '';
-
-    if (!text.trim()) {
-        throw new Error('Invalid response format from Gemini');
-    }
-
-    return text;
+    throw new Error(lastErrorMessage);
 }

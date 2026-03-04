@@ -99,24 +99,123 @@ const availableModels = [
 const apiKey = localStorage.getItem('openrouter_api_key') || '';
 window.OPENROUTER_API_KEY = apiKey; // Make sure it's available globally
 
-// Currently selected model
+const providerDetails = {
+    openrouter: {
+        name: 'OpenRouter',
+        avatar: 'fa-network-wired',
+        description: 'Claude, GPT, Llama, Mistral and more via one provider'
+    },
+    gemini: {
+        name: 'Google Gemini',
+        avatar: 'fa-star',
+        description: 'Native Gemini models via Google AI Studio key'
+    },
+    deepseek: {
+        name: 'DeepSeek',
+        avatar: 'fa-brain',
+        description: 'Coding-focused DeepSeek model family'
+    },
+    huggingface: {
+        name: 'Hugging Face',
+        avatar: 'fa-image',
+        description: 'Image generation and open models'
+    },
+    grok: {
+        name: 'Grok',
+        avatar: 'fa-bolt',
+        description: 'xAI Grok model access'
+    }
+};
+
+// Currently selected model/provider
 let currentModel = null;
+let currentProviderFilter = null;
 
 // Function to initialize the models grid
 function initializeModelsGrid() {
+    renderProviderGrid();
+}
+
+function getHomeScreenHeading() {
+    return document.querySelector('.home-screen h2');
+}
+
+function renderProviderGrid() {
+    currentProviderFilter = null;
+
     const modelsGrid = document.getElementById('models-grid');
+    const heading = getHomeScreenHeading();
+    modelsGrid.innerHTML = '';
+    if (heading) {
+        heading.textContent = 'Select an AI Provider';
+    }
+
+    const providers = Object.keys(providerDetails).filter(providerId =>
+        availableModels.some(model => model.provider === providerId)
+    );
+
+    providers.forEach(providerId => {
+        const provider = providerDetails[providerId] || {
+            name: providerId,
+            avatar: 'fa-robot',
+            description: 'Available models'
+        };
+
+        const providerCard = document.createElement('div');
+        providerCard.className = 'model-card';
+        providerCard.dataset.providerId = providerId;
+
+        providerCard.innerHTML = `
+            <div class="model-avatar">
+                <i class="fas ${provider.avatar}"></i>
+            </div>
+            <h3>${provider.name}</h3>
+            <p>${provider.description}</p>
+        `;
+
+        providerCard.addEventListener('click', () => {
+            renderProviderModels(providerId);
+        });
+
+        modelsGrid.appendChild(providerCard);
+    });
+}
+
+function renderProviderModels(providerId) {
+    currentProviderFilter = providerId;
+
+    const modelsGrid = document.getElementById('models-grid');
+    const heading = getHomeScreenHeading();
     modelsGrid.innerHTML = '';
 
-    availableModels.forEach(model => {
+    const provider = providerDetails[providerId] || { name: providerId };
+    if (heading) {
+        heading.textContent = `Select ${provider.name} Model`;
+    }
+
+    const backCard = document.createElement('div');
+    backCard.className = 'model-card';
+    backCard.innerHTML = `
+        <div class="model-avatar">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+        <h3>Back</h3>
+        <p>Go back to providers</p>
+    `;
+    backCard.addEventListener('click', renderProviderGrid);
+    modelsGrid.appendChild(backCard);
+
+    const providerModels = availableModels.filter(model => model.provider === providerId);
+
+    providerModels.forEach(model => {
         const modelCard = document.createElement('div');
         modelCard.className = 'model-card';
         modelCard.dataset.modelId = model.id;
-        
-        // Add a special class for image generators
+
         if (model.isImageGenerator) {
             modelCard.classList.add('image-generator-card');
         }
-        
+
         modelCard.innerHTML = `
             <div class="model-avatar">
                 <i class="fas ${model.avatar}"></i>
@@ -124,12 +223,11 @@ function initializeModelsGrid() {
             <h3>${model.name}</h3>
             <p>${model.description}</p>
         `;
-        
+
         modelCard.addEventListener('click', () => {
-            // Select the model
             selectModel(model);
         });
-        
+
         modelsGrid.appendChild(modelCard);
     });
 }
@@ -253,6 +351,12 @@ function backToModelSelection() {
         conversationItems.forEach(item => {
             item.classList.remove('active-conversation');
         });
+    }
+
+    if (currentProviderFilter) {
+        renderProviderModels(currentProviderFilter);
+    } else {
+        renderProviderGrid();
     }
     
     currentModel = null;
