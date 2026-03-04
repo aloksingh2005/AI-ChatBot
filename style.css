@@ -2437,4 +2437,93 @@ header h1 {
 .shortcut-description {
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+/* Favorites Section */
+.favorites-section {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.favorites-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+}
+
+.favorites-header i {
+    color: #f39c12;
+}
+
+.favorite-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    color: var(--text-color);
+    position: relative;
+    margin-bottom: 2px;
+}
+
+.favorite-item:hover {
+    background-color: rgba(243, 156, 18, 0.1);
+    color: var(--text-color);
+}
+
+.favorite-item.active-conversation {
+    color: var(--primary-color);
+    background-color: rgba(133, 87, 255, 0.2);
+    border-left: 3px solid var(--primary-color);
+    padding-left: 7px;
+}
+
+.favorite-star {
+    color: #f39c12;
+    margin-right: 8px;
+    font-size: 12px;
+}
+
+.pin-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.conversation-item:hover .pin-btn,
+.favorite-item:hover .pin-btn {
+    opacity: 1;
+}
+
+.pin-btn:hover {
+    background-color: rgba(243, 156, 18, 0.2);
+    color: #f39c12;
+}
+
+.pin-btn.pinned {
+    opacity: 1;
+    color: #f39c12;
+}
+
+.no-favorites {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-style: italic;
 } 

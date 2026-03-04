@@ -1517,6 +1517,9 @@ function renderFolderTree() {
     const folderTree = document.getElementById('folder-tree');
     if (!folderTree) return;
     
+    // Render favorites section first
+    renderFavorites();
+    
     folderTree.innerHTML = '';
     const folders = window.conversationFolders || [];
     
@@ -1592,6 +1595,15 @@ function renderFolderTree() {
                     const convActionsDiv = document.createElement('div');
                     convActionsDiv.className = 'conversation-item-actions';
                     
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-btn' + (isPinned(convId) ? ' pinned' : '');
+                    pinBtn.innerHTML = '<i class="fas fa-star"></i>';
+                    pinBtn.title = isPinned(convId) ? 'Unpin' : 'Pin to favorites';
+                    pinBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        togglePin(convId);
+                    });
+                    
                     const moveBtn = document.createElement('button');
                     moveBtn.className = 'conv-action-btn';
                     moveBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
@@ -1610,6 +1622,7 @@ function renderFolderTree() {
                         deleteConversation(folder.id, convId);
                     });
                     
+                    convActionsDiv.appendChild(pinBtn);
                     convActionsDiv.appendChild(moveBtn);
                     convActionsDiv.appendChild(deleteBtn);
                     convDiv.appendChild(convActionsDiv);
@@ -2266,6 +2279,88 @@ function initKeyboardShortcuts() {
                     if (backBtn) backBtn.click();
                 }
             }
+        }
+    });
+}
+
+// Check if conversation is pinned
+function isPinned(conversationId) {
+    const pinnedConvs = JSON.parse(localStorage.getItem('pinned_conversations')) || [];
+    return pinnedConvs.includes(conversationId);
+}
+
+// Toggle pin status
+function togglePin(conversationId) {
+    let pinnedConvs = JSON.parse(localStorage.getItem('pinned_conversations')) || [];
+    
+    if (pinnedConvs.includes(conversationId)) {
+        pinnedConvs = pinnedConvs.filter(id => id !== conversationId);
+        showToast('Unpinned from favorites');
+    } else {
+        pinnedConvs.push(conversationId);
+        showToast('Pinned to favorites');
+    }
+    
+    localStorage.setItem('pinned_conversations', JSON.stringify(pinnedConvs));
+    renderFolderTree();
+}
+
+// Render favorites section
+function renderFavorites() {
+    const favoritesSection = document.getElementById('favorites-section');
+    if (!favoritesSection) return;
+    
+    const pinnedConvs = JSON.parse(localStorage.getItem('pinned_conversations')) || [];
+    
+    favoritesSection.innerHTML = '';
+    
+    if (pinnedConvs.length === 0) {
+        return; // Don't show anything if no favorites
+    }
+    
+    // Add header
+    const header = document.createElement('div');
+    header.className = 'favorites-header';
+    header.innerHTML = '<i class="fas fa-star"></i> FAVORITES';
+    favoritesSection.appendChild(header);
+    
+    // Add pinned conversations
+    pinnedConvs.forEach(convId => {
+        const model = availableModels.find(m => m.id === convId);
+        if (model) {
+            const favDiv = document.createElement('div');
+            favDiv.className = 'favorite-item';
+            if (currentModel && currentModel.id === convId) {
+                favDiv.classList.add('active-conversation');
+            }
+            
+            const starIcon = document.createElement('span');
+            starIcon.className = 'favorite-star';
+            starIcon.innerHTML = '<i class="fas fa-star"></i>';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = model.name;
+            nameSpan.style.flex = '1';
+            
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'pin-btn pinned';
+            pinBtn.innerHTML = '<i class="fas fa-star"></i>';
+            pinBtn.title = 'Unpin';
+            pinBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePin(convId);
+            });
+            
+            favDiv.appendChild(starIcon);
+            favDiv.appendChild(nameSpan);
+            favDiv.appendChild(pinBtn);
+            
+            favDiv.addEventListener('click', () => {
+                const model = availableModels.find(m => m.id === convId);
+                if (model) loadChatWithModel(model);
+            });
+            
+            favoritesSection.appendChild(favDiv);
         }
     });
 } 
