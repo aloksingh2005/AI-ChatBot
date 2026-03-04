@@ -40,19 +40,19 @@ function getFriendlyErrorMessage(error) {
     const rawMessage = (error && error.message ? error.message : 'Unknown error').toLowerCase();
 
     if (rawMessage.includes('missing authentication header')) {
-        return 'Selected model ke liye valid API key missing hai. Claude/OpenRouter models ke liye OpenRouter key chahiye, aur Gemini model ke liye Gemini key chahiye.';
+        return 'No valid API key found for the selected model. OpenRouter models require an OpenRouter API key, and Gemini models require a Google Gemini API key.';
     }
 
     if (rawMessage.includes('insufficient credits') || rawMessage.includes('never purchased credits')) {
-        return 'OpenRouter key valid hai, lekin is account me credits nahi hain. Manage API me dusri working key select karo ya OpenRouter account me credits add karo: https://openrouter.ai/settings/credits';
+        return 'OpenRouter API key is valid, but this account has no credits. Go to Manage API to select a different key, or add credits to your OpenRouter account: https://openrouter.ai/settings/credits';
     }
 
     if (rawMessage.includes('no auth credentials') || rawMessage.includes('api key is required') || rawMessage.includes('unauthorized') || rawMessage.includes('invalid api key')) {
-        return 'API key issue detected. Manage API me sahi key add/select karo, phir same model dubara try karo.';
+        return 'API key issue detected. Go to Manage API to add or select the correct key, then try the same model again.';
     }
 
     if (rawMessage.includes('timeout') || rawMessage.includes('network')) {
-        return 'Network/timeout issue aaya hai. Thodi der baad retry karo.';
+        return 'Network or timeout issue occurred. Please try again in a moment.';
     }
 
     return `Sorry, I encountered an error: ${error.message}`;
