@@ -65,8 +65,9 @@ async function sendMessage() {
     
     if (!message || !currentModel) return;
     
-    // Add user message to the chat
-    addMessageToChat('user', message);
+    // Add user message to the chat with index
+    const userMsgIndex = currentConversation.length;
+    addMessageToChat('user', message, userMsgIndex);
     
     // Add the message to the conversation array
     currentConversation.push({
@@ -91,8 +92,9 @@ async function sendMessage() {
         // Remove typing indicator
         hideTypingIndicator();
         
-        // Add AI response to the chat
-        addMessageToChat('ai', response);
+        // Add AI response to the chat with index
+        const aiMsgIndex = currentConversation.length;
+        addMessageToChat('ai', response, aiMsgIndex);
         
         // Add the response to the conversation array
         currentConversation.push({
@@ -124,11 +126,12 @@ async function sendMessage() {
 }
 
 // Function to add a message to the chat UI
-function addMessageToChat(role, content) {
+function addMessageToChat(role, content, messageIndex = null) {
     const chatMessages = document.getElementById('chat-messages');
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
+    if (messageIndex !== null) messageDiv.dataset.index = messageIndex;
     
     const isGeneratedImage =
         role === 'ai' &&
@@ -159,6 +162,34 @@ function addMessageToChat(role, content) {
 
         messageDiv.appendChild(textContainer);
         messageDiv.appendChild(avatarDiv);
+
+        // Add action buttons for messages
+        if (messageIndex !== null) {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            
+            if (role === 'user') {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'message-action-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editBtn.addEventListener('click', () => openEditModal(messageIndex, content));
+                actionsDiv.appendChild(editBtn);
+            } else {
+                const regenerateBtn = document.createElement('button');
+                regenerateBtn.className = 'message-action-btn';
+                regenerateBtn.innerHTML = '<i class="fas fa-redo"></i> Regenerate';
+                regenerateBtn.addEventListener('click', () => regenerateMessage(messageIndex));
+                actionsDiv.appendChild(regenerateBtn);
+            }
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'message-action-btn delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+            deleteBtn.addEventListener('click', () => deleteMessage(messageIndex));
+            actionsDiv.appendChild(deleteBtn);
+
+            messageDiv.appendChild(actionsDiv);
+        }
     }
     
     chatMessages.appendChild(messageDiv);
@@ -691,4 +722,122 @@ async function sendToGemini(message) {
     }
 
     throw new Error(lastErrorMessage);
+}
+
+// Open edit modal for message
+function openEditModal(messageIndex, currentContent) {
+    const modal = document.getElementById('edit-message-modal');
+    const textarea = document.getElementById('edit-message-input');
+    const saveBtn = document.getElementById('save-edit-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    
+    textarea.value = currentContent;
+    modal.style.display = 'flex';
+    textarea.focus();
+    
+    const handleSave = async () => {
+        const newContent = textarea.value.trim();
+        if (!newContent) return;
+        
+        // Update conversation array
+        currentConversation[messageIndex].content = newContent;
+        saveConversation();
+        
+        // Remove edit modal
+        modal.style.display = 'none';
+        
+        // Reload chat display
+        reloadChatDisplay();
+        
+        // Show typing indicator and regenerate AI responses
+        const nextMessageIndex = messageIndex + 1;
+        if (nextMessageIndex < currentConversation.length && currentConversation[nextMessageIndex].role === 'assistant') {
+            showTypingIndicator();
+            try {
+                const response = await sendToAI(newContent);
+                hideTypingIndicator();
+                currentConversation[nextMessageIndex].content = response;
+                saveConversation();
+                reloadChatDisplay();
+            } catch (error) {
+                hideTypingIndicator();
+                addMessageToChat('ai', getFriendlyErrorMessage(error), nextMessageIndex);
+            }
+        }
+        
+        // Remove listeners
+        saveBtn.removeEventListener('click', handleSave);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+    
+    const handleCancel = () => {
+        modal.style.display = 'none';
+        saveBtn.removeEventListener('click', handleSave);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+    
+    saveBtn.addEventListener('click', handleSave);
+    cancelBtn.addEventListener('click', handleCancel);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            handleCancel();
+        }
+    });
+}
+
+// Regenerate AI message
+async function regenerateMessage(messageIndex) {
+    if (!currentConversation[messageIndex - 1] || currentConversation[messageIndex - 1].role !== 'user') {
+        showToast('Cannot find the user message to regenerate from.');
+        return;
+    }
+    
+    const userMessage = currentConversation[messageIndex - 1].content;
+    
+    showTypingIndicator();
+    try {
+        const response = await sendToAI(userMessage);
+        hideTypingIndicator();
+        
+        // Update the AI message
+        currentConversation[messageIndex].content = response;
+        saveConversation();
+        
+        // Reload chat display
+        reloadChatDisplay();
+    } catch (error) {
+        hideTypingIndicator();
+        currentConversation[messageIndex].content = getFriendlyErrorMessage(error);
+        saveConversation();
+        reloadChatDisplay();
+    }
+}
+
+// Delete a message from conversation
+function deleteMessage(messageIndex) {
+    if (confirm('Are you sure you want to delete this message? This will also delete the next message in the conversation.')) {
+        // Remove the message and the next message (if it's an AI response)
+        currentConversation.splice(messageIndex, 1);
+        
+        // If the next message was an AI response, remove it too
+        if (messageIndex < currentConversation.length && currentConversation[messageIndex].role === 'assistant') {
+            currentConversation.splice(messageIndex, 1);
+        }
+        
+        saveConversation();
+        reloadChatDisplay();
+        showToast('Message deleted.');
+    }
+}
+
+// Reload chat display
+function reloadChatDisplay() {
+    const chatMessages = document.getElementById('chat-messages');
+    chatMessages.innerHTML = '';
+    
+    currentConversation.forEach((msg, index) => {
+        addMessageToChat(msg.role, msg.content, index);
+    });
 }

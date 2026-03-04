@@ -290,8 +290,8 @@ function loadChatWithSelectedModel(model) {
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.innerHTML = '';
     
-    currentConversation.forEach(msg => {
-        addMessageToChat(msg.role, msg.content);
+    currentConversation.forEach((msg, index) => {
+        addMessageToChat(msg.role, msg.content, index);
     });
     
     // Highlight the current conversation in the sidebar
