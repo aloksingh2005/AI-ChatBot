@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize export conversations
     initExportConversations();
 
+    // Initialize conversation folders
+    initConversationFolders();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -1461,4 +1464,326 @@ function generateTextExport(conversations) {
     });
 
     return text;
+}
+
+// Initialize conversation folders system
+function initConversationFolders() {
+    // Load folders from localStorage or create default ones
+    loadOrCreateFolders();
+    
+    // Render folder tree
+    renderFolderTree();
+    
+    // Setup folder management modals
+    setupFolderModals();
+}
+
+// Load or create default folders
+function loadOrCreateFolders() {
+    let folders = JSON.parse(localStorage.getItem('conversation_folders')) || [];
+    
+    if (folders.length === 0) {
+        folders = [
+            { id: 'uncategorized', name: 'Uncategorized', conversations: [], isDefault: true },
+            { id: 'work', name: 'Work', conversations: [] },
+            { id: 'learning', name: 'Learning', conversations: [] },
+            { id: 'fun', name: 'Fun', conversations: [] }
+        ];
+        localStorage.setItem('conversation_folders', JSON.stringify(folders));
+    }
+    
+    window.conversationFolders = folders;
+}
+
+// Save folders to localStorage
+function saveFolders() {
+    localStorage.setItem('conversation_folders', JSON.stringify(window.conversationFolders || []));
+}
+
+// Render folder tree in sidebar
+function renderFolderTree() {
+    const folderTree = document.getElementById('folder-tree');
+    if (!folderTree) return;
+    
+    folderTree.innerHTML = '';
+    const folders = window.conversationFolders || [];
+    
+    folders.forEach(folder => {
+        // Create folder item
+        const folderDiv = document.createElement('div');
+        folderDiv.className = 'folder-item' + (folder.expanded ? ' expanded' : '');
+        folderDiv.dataset.folderId = folder.id;
+        
+        const toggle = document.createElement('div');
+        toggle.className = 'folder-toggle';
+        toggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            folder.expanded = !folder.expanded;
+            saveFolders();
+            renderFolderTree();
+        });
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'folder-name';
+        nameDiv.innerHTML = `<i class="fas ${folder.isDefault ? 'fa-folder-open' : 'fa-folder'}"></i> ${folder.name}`;
+        
+        const countDiv = document.createElement('div');
+        countDiv.className = 'folder-count';
+        countDiv.textContent = folder.conversations ? folder.conversations.length : 0;
+        
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'folder-actions';
+        
+        if (!folder.isDefault) {
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'folder-action-btn';
+            renameBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            renameBtn.title = 'Rename folder';
+            renameBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                renameFolder(folder.id);
+            });
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'folder-action-btn delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.title = 'Delete folder';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteFolder(folder.id);
+            });
+            
+            actionsDiv.appendChild(renameBtn);
+            actionsDiv.appendChild(deleteBtn);
+        }
+        
+        folderDiv.appendChild(toggle);
+        folderDiv.appendChild(nameDiv);
+        folderDiv.appendChild(countDiv);
+        folderDiv.appendChild(actionsDiv);
+        
+        folderTree.appendChild(folderDiv);
+        
+        // Add conversations if folder is expanded
+        if (folder.expanded && folder.conversations && folder.conversations.length > 0) {
+            folder.conversations.forEach(convId => {
+                const model = availableModels.find(m => m.id === convId);
+                if (model) {
+                    const convDiv = document.createElement('div');
+                    convDiv.className = 'conversation-item';
+                    if (currentModel && currentModel.id === convId) {
+                        convDiv.classList.add('active-conversation');
+                    }
+                    convDiv.textContent = model.name;
+                    
+                    const convActionsDiv = document.createElement('div');
+                    convActionsDiv.className = 'conversation-item-actions';
+                    
+                    const moveBtn = document.createElement('button');
+                    moveBtn.className = 'conv-action-btn';
+                    moveBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                    moveBtn.title = 'Move to folder';
+                    moveBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showAssignFolderModal(convId);
+                    });
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'conv-action-btn delete';
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteBtn.title = 'Delete conversation';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteConversation(folder.id, convId);
+                    });
+                    
+                    convActionsDiv.appendChild(moveBtn);
+                    convActionsDiv.appendChild(deleteBtn);
+                    convDiv.appendChild(convActionsDiv);
+                    
+                    convDiv.addEventListener('click', () => {
+                        const model = availableModels.find(m => m.id === convId);
+                        if (model) loadChatWithModel(model);
+                    });
+                    
+                    folderTree.appendChild(convDiv);
+                }
+            });
+        }
+    });
+}
+
+// Setup folder management modals
+function setupFolderModals() {
+    const newFolderBtn = document.getElementById('new-folder-btn');
+    const newFolderModal = document.getElementById('new-folder-modal');
+    const createFolderBtn = document.getElementById('create-folder-btn');
+    const cancelFolderBtn = document.getElementById('cancel-folder-btn');
+    const folderNameInput = document.getElementById('folder-name-input');
+    
+    // New folder modal
+    newFolderBtn.addEventListener('click', () => {
+        folderNameInput.value = '';
+        newFolderModal.style.display = 'flex';
+        folderNameInput.focus();
+    });
+    
+    createFolderBtn.addEventListener('click', () => {
+        const name = folderNameInput.value.trim();
+        if (!name) {
+            showToast('Please enter a folder name');
+            return;
+        }
+        createFolder(name);
+        newFolderModal.style.display = 'none';
+    });
+    
+    cancelFolderBtn.addEventListener('click', () => {
+        newFolderModal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    newFolderModal.addEventListener('click', (e) => {
+        if (e.target === newFolderModal) {
+            newFolderModal.style.display = 'none';
+        }
+    });
+    
+    // Close modals on X click
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.target.closest('.modal').style.display = 'none';
+        });
+    });
+}
+
+// Create a new folder
+function createFolder(name) {
+    const newFolder = {
+        id: 'folder_' + Date.now(),
+        name: name,
+        conversations: [],
+        expanded: true
+    };
+    
+    window.conversationFolders.push(newFolder);
+    saveFolders();
+    renderFolderTree();
+    showToast(`Folder "${name}" created`);
+}
+
+// Rename folder
+function renameFolder(folderId) {
+    const folder = window.conversationFolders.find(f => f.id === folderId);
+    if (!folder) return;
+    
+    const newName = prompt('Enter new folder name:', folder.name);
+    if (newName && newName.trim()) {
+        folder.name = newName.trim();
+        saveFolders();
+        renderFolderTree();
+    }
+}
+
+// Delete folder
+function deleteFolder(folderId) {
+    if (confirm('Delete this folder? Conversations will be moved to Uncategorized.')) {
+        const folder = window.conversationFolders.find(f => f.id === folderId);
+        const uncategorized = window.conversationFolders.find(f => f.isDefault);
+        
+        if (folder && uncategorized) {
+            uncategorized.conversations = uncategorized.conversations.concat(folder.conversations || []);
+            window.conversationFolders = window.conversationFolders.filter(f => f.id !== folderId);
+            saveFolders();
+            renderFolderTree();
+            showToast('Folder deleted');
+        }
+    }
+}
+
+// Show assign folder modal
+function showAssignFolderModal(conversationId) {
+    const modal = document.getElementById('assign-folder-modal');
+    const folderOptions = document.getElementById('folder-options');
+    
+    folderOptions.innerHTML = '';
+    const currentFolderId = window.conversationFolders.find(f => 
+        f.conversations && f.conversations.includes(conversationId)
+    )?.id;
+    
+    window.conversationFolders.forEach(folder => {
+        const label = document.createElement('label');
+        label.className = 'folder-option';
+        
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'target-folder';
+        radio.value = folder.id;
+        radio.checked = folder.id === currentFolderId;
+        
+        const text = document.createElement('span');
+        text.textContent = folder.name;
+        
+        label.appendChild(radio);
+        label.appendChild(text);
+        folderOptions.appendChild(label);
+    });
+    
+    const confirmBtn = document.getElementById('confirm-assign-btn');
+    const cancelBtn = document.getElementById('cancel-assign-btn');
+    
+    const handleConfirm = () => {
+        const selectedFolderId = document.querySelector('input[name="target-folder"]:checked').value;
+        moveConversationToFolder(conversationId, selectedFolderId);
+        modal.style.display = 'none';
+        confirmBtn.removeEventListener('click', handleConfirm);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+    
+    const handleCancel = () => {
+        modal.style.display = 'none';
+        confirmBtn.removeEventListener('click', handleConfirm);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+    
+    confirmBtn.addEventListener('click', handleConfirm);
+    cancelBtn.addEventListener('click', handleCancel);
+    
+    modal.style.display = 'flex';
+}
+
+// Move conversation to folder
+function moveConversationToFolder(conversationId, targetFolderId) {
+    // Remove from all folders
+    window.conversationFolders.forEach(folder => {
+        if (folder.conversations) {
+            folder.conversations = folder.conversations.filter(id => id !== conversationId);
+        }
+    });
+    
+    // Add to target folder
+    const targetFolder = window.conversationFolders.find(f => f.id === targetFolderId);
+    if (targetFolder) {
+        if (!targetFolder.conversations) targetFolder.conversations = [];
+        targetFolder.conversations.push(conversationId);
+        saveFolders();
+        renderFolderTree();
+        showToast('Conversation moved');
+    }
+}
+
+// Delete conversation from folder
+function deleteConversation(folderId, conversationId) {
+    if (confirm('Delete this conversation?')) {
+        const folder = window.conversationFolders.find(f => f.id === folderId);
+        if (folder && folder.conversations) {
+            folder.conversations = folder.conversations.filter(id => id !== conversationId);
+            localStorage.removeItem(`chat_${conversationId}`);
+            saveFolders();
+            renderFolderTree();
+            updateConversationHistory();
+            showToast('Conversation deleted');
+        }
+    }
 } 

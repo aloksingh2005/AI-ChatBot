@@ -364,37 +364,33 @@ function backToModelSelection() {
 
 // Update conversation history in the sidebar
 function updateConversationHistory() {
-    const historyList = document.getElementById('conversation-history');
-    historyList.innerHTML = '';
+    // This function is now replaced by the folder tree system
+    // But we still need to update folders with new conversations
     
-    // Get all keys from localStorage that start with 'chat_'
     const keys = Object.keys(localStorage).filter(key => key.startsWith('chat_'));
+    const folders = window.conversationFolders || [];
     
+    // Add new conversations to uncategorized folder if not already in any folder
     keys.forEach(key => {
         const modelId = key.replace('chat_', '');
-        const model = availableModels.find(m => m.id === modelId);
+        const isInFolder = folders.some(f => f.conversations && f.conversations.includes(modelId));
         
-        if (model) {
-            const listItem = document.createElement('li');
-            listItem.textContent = model.name;
-            listItem.dataset.modelId = modelId;
-            
-            // Check if this is the current model
-            if (currentModel && currentModel.id === modelId) {
-                listItem.classList.add('active-conversation');
+        if (!isInFolder) {
+            const uncategorized = folders.find(f => f.isDefault);
+            if (uncategorized) {
+                if (!uncategorized.conversations) uncategorized.conversations = [];
+                uncategorized.conversations.push(modelId);
             }
-            
-            listItem.addEventListener('click', () => {
-                const selectedModel = availableModels.find(m => m.id === modelId);
-                selectModel(selectedModel);
-                
-                // If sidebar is open on mobile, close it
-                if (window.innerWidth <= 768) {
-                    toggleSidebar();
-                }
-            });
-            
-            historyList.appendChild(listItem);
         }
     });
+    
+    // Save updated folders
+    if (typeof saveFolders === 'function') {
+        saveFolders();
+    }
+    
+    // Render folder tree
+    if (typeof renderFolderTree === 'function') {
+        renderFolderTree();
+    }
 } 

@@ -31,10 +31,15 @@
                     </div>
                 </div>
                 <div class="menu-section">
-                    <h3>Conversations</h3>
-                    <ul id="conversation-history">
-                        <!-- Conversation history will be added here dynamically -->
-                    </ul>
+                    <div class="folder-header">
+                        <h3>Conversations</h3>
+                        <button id="new-folder-btn" title="Create new folder">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                    </div>
+                    <div id="folder-tree">
+                        <!-- Folders and conversations will be generated here -->
+                    </div>
                 </div>
                 <div class="settings-section">
                     <h3>Settings</h3>
@@ -165,6 +170,36 @@
             <div class="modal-actions">
                 <button id="save-edit-btn" class="btn-primary">Save & Regenerate</button>
                 <button id="cancel-edit-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Folder Modal -->
+    <div id="new-folder-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Create New Folder</h2>
+            <div class="form-group">
+                <input type="text" id="folder-name-input" placeholder="Folder name (e.g., Work, Learning, Fun)" class="full-width-input">
+            </div>
+            <div class="modal-actions">
+                <button id="create-folder-btn" class="btn-primary">Create</button>
+                <button id="cancel-folder-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Conversation to Folder Modal -->
+    <div id="assign-folder-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Assign to Folder</h2>
+            <div id="folder-options">
+                <!-- Folder options will be generated here -->
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-assign-btn" class="btn-primary">Assign</button>
+                <button id="cancel-assign-btn" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
