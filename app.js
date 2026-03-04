@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize conversation folders
     initConversationFolders();
 
+    // Initialize system prompt customization
+    initSystemPrompts();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -1786,4 +1789,99 @@ function deleteConversation(folderId, conversationId) {
             showToast('Conversation deleted');
         }
     }
-} 
+}
+
+// Initialize system prompt customization
+function initSystemPrompts() {
+    const systemPromptBtn = document.getElementById('system-prompt-btn');
+    const modal = document.getElementById('system-prompt-modal');
+    const textarea = document.getElementById('system-prompt-input');
+    const saveBtn = document.getElementById('save-prompt-btn');
+    const clearBtn = document.getElementById('clear-prompt-btn');
+    const closeBtn = modal.querySelector('.close-modal');
+    
+    // Preset prompts
+    const presets = {
+        default: '',
+        expert: 'You are an expert software developer with deep knowledge of programming languages, frameworks, and best practices. Always provide detailed explanations with code examples.',
+        teacher: 'You are a patient and encouraging teacher. Break down complex topics into simple, easy-to-understand explanations. Use analogies and examples to help clarify concepts.',
+        creative: 'You are a creative writer with a vivid imagination. Craft engaging, descriptive narratives and help users develop their storytelling skills.'
+    };
+    
+    // Open modal when button clicked
+    if (systemPromptBtn) {
+        systemPromptBtn.addEventListener('click', () => {
+            if (!currentModel) return;
+            
+            const savedPrompt = getSystemPrompt(currentModel.id);
+            textarea.value = savedPrompt || '';
+            modal.style.display = 'flex';
+            textarea.focus();
+        });
+    }
+    
+    // Close modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    // Save system prompt
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (!currentModel) return;
+            
+            const prompt = textarea.value.trim();
+            setSystemPrompt(currentModel.id, prompt);
+            modal.style.display = 'none';
+            showToast('System prompt saved');
+        });
+    }
+    
+    // Clear system prompt
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (!currentModel) return;
+            
+            textarea.value = '';
+            setSystemPrompt(currentModel.id, '');
+            modal.style.display = 'none';
+            showToast('System prompt cleared');
+        });
+    }
+    
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+            textarea.value = presets[preset] || '';
+        });
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+// Get system prompt for a model
+function getSystemPrompt(modelId) {
+    const key = `system_prompt_${modelId}`;
+    return localStorage.getItem(key) || '';
+}
+
+// Set system prompt for a model
+function setSystemPrompt(modelId, prompt) {
+    const key = `system_prompt_${modelId}`;
+    if (prompt) {
+        localStorage.setItem(key, prompt);
+    } else {
+        localStorage.removeItem(key);
+    }
+}
+
+// Export function to be used by chat.js
+window.getSystemPrompt = getSystemPrompt; 

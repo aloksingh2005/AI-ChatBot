@@ -101,6 +101,7 @@
                         </div>
                         <h2 id="current-model-name">Chatbot</h2>
                     </div>
+                    <button id="system-prompt-btn" title="Set System Prompt"><i class="fas fa-cog"></i></button>
                     <button id="close-chat"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="chat-messages" id="chat-messages">
@@ -200,6 +201,29 @@
             <div class="modal-actions">
                 <button id="confirm-assign-btn" class="btn-primary">Assign</button>
                 <button id="cancel-assign-btn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Prompt Modal -->
+    <div id="system-prompt-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>System Prompt Settings</h2>
+            <p>Customize how the AI behaves for this model. This prompt is sent with every message.</p>
+            <div class="form-group">
+                <label for="system-prompt-input">System Prompt:</label>
+                <textarea id="system-prompt-input" placeholder="E.g., You are a helpful JavaScript expert. Always provide code examples in ES6+ syntax." rows="6" class="full-width-input"></textarea>
+            </div>
+            <div class="prompt-presets">
+                <button class="preset-btn" data-preset="default">Default</button>
+                <button class="preset-btn" data-preset="expert">Code Expert</button>
+                <button class="preset-btn" data-preset="teacher">Patient Teacher</button>
+                <button class="preset-btn" data-preset="creative">Creative Writer</button>
+            </div>
+            <div class="modal-actions">
+                <button id="save-prompt-btn" class="btn-primary">Save</button>
+                <button id="clear-prompt-btn" class="btn-secondary">Clear</button>
             </div>
         </div>
     </div>

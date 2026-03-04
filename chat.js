@@ -282,6 +282,15 @@ async function sendToAI(message) {
                 content: msg.content
             }));
             
+            // Add system prompt if available
+            const systemPrompt = window.getSystemPrompt ? window.getSystemPrompt(currentModel.id) : '';
+            if (systemPrompt) {
+                messages.unshift({
+                    role: 'system',
+                    content: systemPrompt
+                });
+            }
+            
             // Adjust request parameters based on model
             let maxTokens = 1000;
             let temperature = 0.7;
@@ -442,6 +451,15 @@ async function sendToDeepSeek(message) {
             content: msg.content
         }));
         
+        // Add system prompt if available
+        const systemPrompt = window.getSystemPrompt ? window.getSystemPrompt(currentModel.id) : '';
+        if (systemPrompt) {
+            messages.unshift({
+                role: 'system',
+                content: systemPrompt
+            });
+        }
+        
         // Use OpenRouter to access DeepSeek model
         console.log('Sending request to DeepSeek via OpenRouter');
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -508,6 +526,15 @@ async function sendToGrok(message) {
             role: msg.role === 'ai' ? 'assistant' : msg.role,
             content: msg.content
         }));
+        
+        // Add system prompt if available
+        const systemPrompt = window.getSystemPrompt ? window.getSystemPrompt(currentModel.id) : '';
+        if (systemPrompt) {
+            messages.unshift({
+                role: 'system',
+                content: systemPrompt
+            });
+        }
         
         // Use OpenRouter to access Grok model
         console.log('Sending request to Grok AI via OpenRouter');
@@ -672,6 +699,9 @@ async function sendToGemini(message) {
         parts: [{ text: msg.content }]
     }));
 
+    // Get system prompt for Gemini
+    const systemPrompt = window.getSystemPrompt ? window.getSystemPrompt(currentModel.id) : '';
+
     const modelCandidates = await fetchGeminiModelCandidates(apiKey);
     const apiVersions = ['v1beta', 'v1'];
     let lastErrorMessage = 'Failed to get response from Gemini';
@@ -685,6 +715,7 @@ async function sendToGemini(message) {
                 },
                 body: JSON.stringify({
                     contents,
+                    systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
                     generationConfig: {
                         temperature: 0.7,
                         maxOutputTokens: 1024

@@ -2154,4 +2154,69 @@ header h1 {
 .form-group input:focus {
     outline: none;
     border-color: var(--primary-color);
+}
+
+/* System Prompt Styles */
+#system-prompt-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+#system-prompt-btn:hover {
+    background-color: rgba(133, 87, 255, 0.2);
+    color: var(--primary-color);
+}
+
+.prompt-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 15px 0;
+}
+
+.preset-btn {
+    padding: 8px 14px;
+    background-color: var(--chat-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.preset-btn:hover {
+    background-color: rgba(133, 87, 255, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--chat-bg);
+    color: var(--text-color);
+    resize: vertical;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
 } 
