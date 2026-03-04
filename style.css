@@ -107,6 +107,14 @@ button:hover {
     display: flex;
     align-items: center;
     margin-bottom: 30px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 10px;
+    transition: background-color 0.2s;
+}
+
+.profile-section:hover {
+    background-color: var(--chat-user-bg);
 }
 
 .profile-icon {
@@ -120,6 +128,16 @@ button:hover {
     margin-right: 15px;
     color: white;
     font-size: 20px;
+}
+
+.profile-email {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #777;
+}
+
+.dark-mode .profile-email {
+    color: #aaa;
 }
 
 .menu-section {

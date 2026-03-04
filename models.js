@@ -166,18 +166,10 @@ function selectModel(model) {
 function loadChatWithSelectedModel(model) {
     currentModel = model;
     
-    // Set appropriate API key based on model provider
-    let apiKey;
-    if (model.provider === 'huggingface') {
-        apiKey = window.HUGGINGFACE_API_KEY || localStorage.getItem('huggingface_api_key');
-    } else if (model.provider === 'deepseek') {
-        apiKey = window.DEEPSEEK_API_KEY || localStorage.getItem('deepseek_api_key');
-    } else if (model.provider === 'grok') {
-        apiKey = window.GROK_API_KEY || localStorage.getItem('grok_api_key');
-    } else {
-        // Default to OpenRouter for most models
-        apiKey = window.OPENROUTER_API_KEY || localStorage.getItem('openrouter_api_key');
-    }
+    // Set appropriate API key based on model provider/model-specific assignment
+    const apiKey = window.resolveProviderApiKey
+        ? window.resolveProviderApiKey(model.provider, model.id)
+        : '';
     
     // If no API key is found, prompt the user to add one
     if (!apiKey) {

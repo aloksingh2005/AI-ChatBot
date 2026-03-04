@@ -63,15 +63,6 @@ async function sendMessage() {
     showTypingIndicator();
     
     try {
-        // Check if API key is available
-        if (!window.OPENROUTER_API_KEY) {
-            if (!setupApiKey()) {
-                hideTypingIndicator();
-                addMessageToChat('ai', "Please provide a valid OpenRouter API key to continue.");
-                return;
-            }
-        }
-        
         // Send the message to OpenRouter API
         const response = await sendToAI(message);
         
@@ -113,8 +104,14 @@ function addMessageToChat(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
-    // Check if content contains HTML (for image generation)
-    if (content.startsWith('<div class="generated-image">')) {
+    const isGeneratedImage =
+        role === 'ai' &&
+        typeof content === 'string' &&
+        content.startsWith('<div class="generated-image">') &&
+        content.includes('<img src="data:image');
+
+    // Check if content contains trusted HTML (for image generation)
+    if (isGeneratedImage) {
         messageDiv.innerHTML = `
             ${content}
             <div class="message-avatar">
@@ -122,19 +119,20 @@ function addMessageToChat(role, content) {
             </div>
         `;
     } else {
-        // Regular text message
-        // Replace newlines with <br> tags for proper display
-        const formattedContent = content.replace(/\n/g, '<br>');
-        
+        // Regular text message (safe rendering)
+        const textContainer = document.createElement('div');
+        textContainer.style.whiteSpace = 'pre-wrap';
+        textContainer.textContent = content;
+
         // Add avatar icon based on role
         const avatarIcon = role === 'ai' ? 'fa-robot' : 'fa-user';
-        
-        messageDiv.innerHTML = `
-            ${formattedContent}
-            <div class="message-avatar">
-                <i class="fas ${avatarIcon}"></i>
-            </div>
-        `;
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'message-avatar';
+        avatarDiv.innerHTML = `<i class="fas ${avatarIcon}"></i>`;
+
+        messageDiv.appendChild(textContainer);
+        messageDiv.appendChild(avatarDiv);
     }
     
     chatMessages.appendChild(messageDiv);
@@ -198,13 +196,10 @@ async function sendToAI(message) {
     }
     
     // Default: OpenRouter API
-    // First check for model-specific API key
-    let apiKey = localStorage.getItem(`model_specific_key_${currentModel.id}`);
-    
-    // If no model-specific key, get provider key
-    if (!apiKey) {
-        apiKey = window.OPENROUTER_API_KEY || localStorage.getItem('openrouter_api_key');
-    }
+    // Resolve key from model-specific assignment or provider defaults
+    const apiKey = window.resolveProviderApiKey
+        ? window.resolveProviderApiKey('openrouter', currentModel.id)
+        : '';
     
     // Still no key found
     if (!apiKey) {
@@ -316,24 +311,9 @@ async function sendToAI(message) {
 
 // Function to generate image with Hugging Face
 async function generateImageWithHuggingFace(prompt) {
-    // Get Hugging Face API key - first check localStorage, then try to find from stored keys
-    let apiKey = window.HUGGINGFACE_API_KEY || localStorage.getItem('huggingface_api_key');
-    
-    // If no API key in localStorage, try to find from stored keys
-    if (!apiKey) {
-        const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
-        const huggingFaceKey = storedKeys.find(k => 
-            k.provider === 'huggingface' || 
-            k.name.toLowerCase().includes('hugging') || 
-            k.name.toLowerCase().includes('face')
-        );
-        
-        if (huggingFaceKey) {
-            apiKey = huggingFaceKey.key;
-            localStorage.setItem('huggingface_api_key', apiKey);
-            window.HUGGINGFACE_API_KEY = apiKey;
-        }
-    }
+    const apiKey = window.resolveProviderApiKey
+        ? window.resolveProviderApiKey('huggingface', currentModel ? currentModel.id : null)
+        : '';
     
     if (!apiKey) {
         throw new Error('Hugging Face API key is required for image generation. Please add one in Manage API settings.');
@@ -385,13 +365,9 @@ async function generateImageWithHuggingFace(prompt) {
 // Function to send request to DeepSeek
 async function sendToDeepSeek(message) {
     try {
-        // First check for model-specific API key
-        let apiKey = localStorage.getItem(`model_specific_key_${currentModel.id}`);
-        
-        // If no model-specific key, try to use OpenRouter key
-        if (!apiKey) {
-            apiKey = window.OPENROUTER_API_KEY || localStorage.getItem('openrouter_api_key');
-        }
+        const apiKey = window.resolveProviderApiKey
+            ? window.resolveProviderApiKey('deepseek', currentModel.id)
+            : '';
         
         if (!apiKey) {
             throw new Error('API key is required for DeepSeek. Please add one in settings.');
@@ -456,13 +432,9 @@ async function sendToDeepSeek(message) {
 // Function to send request to Grok
 async function sendToGrok(message) {
     try {
-        // First check for model-specific API key
-        let apiKey = localStorage.getItem(`model_specific_key_${currentModel.id}`);
-        
-        // If no model-specific key, try to use OpenRouter key
-        if (!apiKey) {
-            apiKey = window.OPENROUTER_API_KEY || localStorage.getItem('openrouter_api_key');
-        }
+        const apiKey = window.resolveProviderApiKey
+            ? window.resolveProviderApiKey('grok', currentModel.id)
+            : '';
         
         if (!apiKey) {
             throw new Error('API key is required for Grok AI. Please add one in settings.');

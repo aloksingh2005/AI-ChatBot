@@ -1,8 +1,9 @@
 // Main app initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Removed all code that loads API keys from localStorage
+    // Load persisted provider keys into runtime
+    hydrateProviderKeysFromStorage();
 
-    // Import predefined API keys if none are stored yet
+    // Cleanup/migrate legacy predefined key entries
     importPredefinedAPIKeys();
 
     // Initialize model selection grid
@@ -22,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Manage API button
     initManageAPI();
+
+    // Initialize user profile
+    initUserProfile();
 
     // Initialize about modal
     initAboutModal();
@@ -132,6 +136,117 @@ function initManageAPI() {
     });
 }
 
+// Function to initialize user profile section and modal
+function initUserProfile() {
+    const profileSection = document.querySelector('.profile-section');
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+
+    const savedProfile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+    const userName = savedProfile.name || 'User Profile';
+    const userEmail = savedProfile.email || 'Click to set profile';
+
+    if (profileName) {
+        profileName.textContent = userName;
+    }
+
+    if (profileEmail) {
+        profileEmail.textContent = userEmail;
+    }
+
+    if (profileSection) {
+        profileSection.addEventListener('click', showProfileModal);
+    }
+}
+
+function showProfileModal() {
+    let profileModal = document.getElementById('profile-modal');
+
+    if (!profileModal) {
+        profileModal = document.createElement('div');
+        profileModal.id = 'profile-modal';
+        profileModal.className = 'modal';
+
+        profileModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-modal" id="close-profile-modal">&times;</span>
+                <h2><i class="fas fa-user"></i> Update Profile</h2>
+                <div class="modal-divider"></div>
+                <div class="modal-body">
+                    <div class="api-key-input-container">
+                        <p class="modal-instruction">Name</p>
+                        <input type="text" id="profile-name-input" class="full-width-input" placeholder="Your name">
+                    </div>
+                    <div class="api-key-input-container">
+                        <p class="modal-instruction">Email (optional)</p>
+                        <input type="email" id="profile-email-input" class="full-width-input" placeholder="you@example.com">
+                    </div>
+                    <div class="modal-divider"></div>
+                    <div class="store-key-actions">
+                        <button id="cancel-profile" class="secondary-button">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button id="save-profile" class="primary-button">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(profileModal);
+
+        document.getElementById('close-profile-modal').addEventListener('click', () => {
+            profileModal.style.display = 'none';
+        });
+
+        document.getElementById('cancel-profile').addEventListener('click', () => {
+            profileModal.style.display = 'none';
+        });
+
+        document.getElementById('save-profile').addEventListener('click', () => {
+            const nameInput = document.getElementById('profile-name-input').value.trim();
+            const emailInput = document.getElementById('profile-email-input').value.trim();
+
+            if (!nameInput) {
+                showToast('Please enter your name');
+                return;
+            }
+
+            localStorage.setItem('user_profile', JSON.stringify({
+                name: nameInput,
+                email: emailInput
+            }));
+
+            const profileName = document.getElementById('profile-name');
+            const profileEmail = document.getElementById('profile-email');
+
+            if (profileName) {
+                profileName.textContent = nameInput;
+            }
+
+            if (profileEmail) {
+                profileEmail.textContent = emailInput || 'No email added';
+            }
+
+            profileModal.style.display = 'none';
+            showToast('Profile updated');
+        });
+
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) {
+                profileModal.style.display = 'none';
+            }
+        });
+    }
+
+    const savedProfile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+    document.getElementById('profile-name-input').value = savedProfile.name || '';
+    document.getElementById('profile-email-input').value = savedProfile.email || '';
+
+    profileModal.style.display = 'flex';
+}
+
 // Function to initialize about modal
 function initAboutModal() {
     // Use a more specific selector that targets the About App text
@@ -239,8 +354,84 @@ function initVoiceInput() {
 
 // Function to handle API key setup
 function setupApiKey() {
-    // Removed all code that loads API keys from localStorage
+    storeApiKey();
     return false;
+}
+
+function getProviderStorageKey(provider) {
+    const normalizedProvider = provider || 'openrouter';
+
+    if (normalizedProvider === 'huggingface') {
+        return 'huggingface_api_key';
+    }
+
+    if (normalizedProvider === 'deepseek') {
+        return 'deepseek_api_key';
+    }
+
+    if (normalizedProvider === 'grok') {
+        return 'grok_api_key';
+    }
+
+    return 'openrouter_api_key';
+}
+
+function getProviderWindowKey(provider) {
+    const normalizedProvider = provider || 'openrouter';
+
+    if (normalizedProvider === 'huggingface') {
+        return 'HUGGINGFACE_API_KEY';
+    }
+
+    if (normalizedProvider === 'deepseek') {
+        return 'DEEPSEEK_API_KEY';
+    }
+
+    if (normalizedProvider === 'grok') {
+        return 'GROK_API_KEY';
+    }
+
+    return 'OPENROUTER_API_KEY';
+}
+
+window.resolveProviderApiKey = function (provider, modelId = null) {
+    if (modelId) {
+        const modelSpecificKey = localStorage.getItem(`model_specific_key_${modelId}`);
+        if (modelSpecificKey) {
+            return modelSpecificKey;
+        }
+    }
+
+    const storageKey = getProviderStorageKey(provider);
+    const windowKey = getProviderWindowKey(provider);
+
+    const directKey = window[windowKey] || localStorage.getItem(storageKey);
+    if (directKey && directKey.trim()) {
+        return directKey;
+    }
+
+    const storedKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
+    const fallback = storedKeys.find(k => k.provider === (provider || 'openrouter') && k.key && k.key.trim());
+
+    if (fallback) {
+        localStorage.setItem(storageKey, fallback.key);
+        window[windowKey] = fallback.key;
+        return fallback.key;
+    }
+
+    return '';
+};
+
+function hydrateProviderKeysFromStorage() {
+    ['openrouter', 'deepseek', 'huggingface', 'grok'].forEach(provider => {
+        const key = window.resolveProviderApiKey(provider);
+        if (key) {
+            const windowKey = getProviderWindowKey(provider);
+            const storageKey = getProviderStorageKey(provider);
+            window[windowKey] = key;
+            localStorage.setItem(storageKey, key);
+        }
+    });
 }
 
 // Function to store and manage API keys
@@ -459,13 +650,15 @@ function storeApiKey() {
             let keysHTML = '';
             storedKeys.forEach((keyObj, index) => {
                 // Mask the API key for display
-                const maskedKey = keyObj.key.substring(0, 5) + '...' + keyObj.key.substring(keyObj.key.length - 5);
+                const safeKey = keyObj.key || '';
+                const maskedKey = safeKey.length > 10
+                    ? safeKey.substring(0, 5) + '...' + safeKey.substring(safeKey.length - 5)
+                    : '••••••••••';
 
                 // Check if this key is currently active based on its provider
-                let isActive = false;
-                if (keyObj.provider === 'openrouter') {
-                    // Removed isActive checks for API keys from localStorage
-                }
+                const providerStorageKey = getProviderStorageKey(keyObj.provider || 'openrouter');
+                const activeProviderKey = localStorage.getItem(providerStorageKey);
+                const isActive = Boolean(activeProviderKey && keyObj.key === activeProviderKey);
 
                 // Get provider icon
                 const providerIcon = getProviderIcon(keyObj.provider || 'other');
@@ -496,7 +689,7 @@ function storeApiKey() {
             // Add event listeners for Apply buttons
             document.querySelectorAll('.apply-key-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
+                    const index = parseInt(e.currentTarget.dataset.index);
                     showModelSelectionForKey(index);
                 });
             });
@@ -504,7 +697,7 @@ function storeApiKey() {
             // Add event listeners for Delete buttons
             document.querySelectorAll('.delete-key-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
+                    const index = parseInt(e.currentTarget.dataset.index);
                     deleteStoredKey(index);
                 });
             });
@@ -519,6 +712,10 @@ function storeApiKey() {
 
             // Confirm deletion
             if (confirm(`Are you sure you want to delete the key "${keyToDelete.name}"?`)) {
+                const providerStorageKey = getProviderStorageKey(keyToDelete.provider || 'openrouter');
+                const providerWindowKey = getProviderWindowKey(keyToDelete.provider || 'openrouter');
+                const wasDefault = localStorage.getItem(providerStorageKey) === keyToDelete.key;
+
                 // Remove key from storage
                 storedKeys.splice(keyIndex, 1);
                 localStorage.setItem('stored_api_keys', JSON.stringify(storedKeys));
@@ -531,11 +728,22 @@ function storeApiKey() {
                     }
                 });
 
+                if (wasDefault) {
+                    localStorage.removeItem(providerStorageKey);
+                    window[providerWindowKey] = '';
+
+                    const replacementKey = window.resolveProviderApiKey(keyToDelete.provider || 'openrouter');
+                    if (replacementKey) {
+                        localStorage.setItem(providerStorageKey, replacementKey);
+                        window[providerWindowKey] = replacementKey;
+                    }
+                }
+
                 // Update the display
                 updateStoredKeysDisplay();
 
                 // Show toast message
-                if (isDefault) {
+                if (wasDefault) {
                     showToast(`Deleted default API key "${keyToDelete.name}"`);
                 } else {
                     showToast(`Deleted API key "${keyToDelete.name}"`);
@@ -807,65 +1015,20 @@ function showToast(message) {
 
 // Function to import predefined API keys provided by the user
 function importPredefinedAPIKeys() {
-    // Only run this if there are no stored keys yet
     const existingKeys = JSON.parse(localStorage.getItem('stored_api_keys') || '[]');
-    if (existingKeys.length > 0) return;
-
-    console.log('Importing predefined API keys...');
-
-    // Predefined API keys
-    const predefinedKeys = [
-        {
-            name: 'OpenRouter',
-            key: '',
-            provider: 'openrouter',
-            date: new Date().toISOString()
-        },
-        {
-            name: 'DeepSeek',
-            key: '',
-            provider: 'deepseek',
-            date: new Date().toISOString()
-        },
-        {
-            name: 'Cohere',
-            key: '',
-            provider: 'other',
-            date: new Date().toISOString()
-        },
-        {
-            name: 'Grok',
-            key: '',
-            provider: 'other',
-            date: new Date().toISOString()
-        },
-        {
-            name: 'Hugging Face',
-            key: '',
-            provider: 'huggingface',
-            date: new Date().toISOString()
-        }
-    ];
-
-    // Store API keys in localStorage
-    localStorage.setItem('stored_api_keys', JSON.stringify(predefinedKeys));
-
-    // Set the OpenRouter API key as the default active key
-    const openRouterKey = predefinedKeys.find(k => k.provider === 'openrouter');
-    if (openRouterKey) {
-        localStorage.setItem('openrouter_api_key', openRouterKey.key);
-        window.OPENROUTER_API_KEY = openRouterKey.key;
+    if (!Array.isArray(existingKeys) || existingKeys.length === 0) {
+        return;
     }
 
-    // Also set Hugging Face API key for image generation
-    const huggingFaceKey = predefinedKeys.find(k => k.provider === 'huggingface');
-    if (huggingFaceKey) {
-        localStorage.setItem('huggingface_api_key', huggingFaceKey.key);
-        window.HUGGINGFACE_API_KEY = huggingFaceKey.key;
+    const validKeys = existingKeys.filter(keyObj =>
+        keyObj && typeof keyObj.key === 'string' && keyObj.key.trim()
+    );
+
+    if (validKeys.length !== existingKeys.length) {
+        localStorage.setItem('stored_api_keys', JSON.stringify(validKeys));
     }
 
-    console.log('Predefined API keys imported successfully');
-    showToast('API keys imported successfully');
+    hydrateProviderKeysFromStorage();
 }
 
 // Function to show chat deletion modal
