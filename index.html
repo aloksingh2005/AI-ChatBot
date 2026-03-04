@@ -46,6 +46,14 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
+                    <div class="setting-item" id="search-conversations-btn">
+                        <i class="fas fa-search"></i>
+                        <span>Search Chats</span>
+                    </div>
+                    <div class="setting-item" id="export-conversations-btn">
+                        <i class="fas fa-download"></i>
+                        <span>Export Chats</span>
+                    </div>
                     <div class="setting-item">
                         <i class="fas fa-trash"></i>
                         <span>Clear All Chats</span>
@@ -129,6 +137,41 @@
             <div class="modal-footer">
                 <p>© 2023 AI Chat App</p>
             </div>
+        </div>
+    </div>
+
+    <!-- Search Conversations Modal -->
+    <div id="search-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Search Conversations</h2>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search by text, model, or date...">
+            </div>
+            <div id="search-results" class="search-results">
+                <!-- Search results will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Conversations Modal -->
+    <div id="export-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Export Conversations</h2>
+            <p>Choose export format:</p>
+            <div class="export-options">
+                <button id="export-json-btn" class="export-btn">
+                    <i class="fas fa-file-code"></i> JSON
+                </button>
+                <button id="export-markdown-btn" class="export-btn">
+                    <i class="fas fa-file-lines"></i> Markdown
+                </button>
+                <button id="export-all-txt-btn" class="export-btn">
+                    <i class="fas fa-file-alt"></i> Text (All)
+                </button>
+            </div>
+            <div id="export-status" style="margin-top: 15px; text-align: center;"></div>
         </div>
     </div>
 

@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize clear conversations button
     initClearConversations();
 
+    // Initialize search conversations
+    initSearchConversations();
+
+    // Initialize export conversations
+    initExportConversations();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -1200,4 +1206,259 @@ function deleteSelectedConversations(chatKeys) {
 
     // Show success toast
     showToast(`${chatKeys.length} conversation(s) deleted`);
+}
+
+// Initialize search conversations
+function initSearchConversations() {
+    const searchBtn = document.getElementById('search-conversations-btn');
+    const searchModal = document.getElementById('search-modal');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const closeBtn = searchModal.querySelector('.close-modal');
+
+    searchBtn.addEventListener('click', () => {
+        searchModal.style.display = 'flex';
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchInput.focus();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        searchModal.style.display = 'none';
+    });
+
+    // Real-time search as user types
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query.length === 0) {
+            searchResults.innerHTML = '';
+            return;
+        }
+        performSearch(query);
+    });
+
+    // Close modal when clicking outside
+    searchModal.addEventListener('click', (e) => {
+        if (e.target === searchModal) {
+            searchModal.style.display = 'none';
+        }
+    });
+}
+
+// Perform search across all conversations
+function performSearch(query) {
+    const searchResults = document.getElementById('search-results');
+    const allConversations = [];
+
+    // Get all chat keys from localStorage
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('chat_')) {
+            const modelId = key.replace('chat_', '');
+            const chatData = JSON.parse(localStorage.getItem(key)) || [];
+            
+            // Find the model
+            const model = availableModels.find(m => m.id === modelId);
+            if (model) {
+                allConversations.push({
+                    modelId,
+                    modelName: model.name,
+                    messages: chatData || [],
+                    key
+                });
+            }
+        }
+    });
+
+    let results = [];
+
+    // Search through conversations
+    allConversations.forEach(conv => {
+        let matchedMessages = [];
+        
+        conv.messages.forEach((msg, idx) => {
+            if (msg.content && msg.content.toLowerCase().includes(query)) {
+                matchedMessages.push({...msg, index: idx});
+            }
+        });
+
+        if (matchedMessages.length > 0 || conv.modelName.toLowerCase().includes(query)) {
+            results.push({
+                ...conv,
+                matchedMessages
+            });
+        }
+    });
+
+    // Display results
+    searchResults.innerHTML = '';
+    if (results.length === 0) {
+        searchResults.innerHTML = '<div class="no-search-results">No conversations found with that search term.</div>';
+        return;
+    }
+
+    results.forEach(result => {
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'search-result-item';
+        
+        const title = document.createElement('div');
+        title.className = 'search-result-title';
+        title.textContent = result.modelName;
+
+        const meta = document.createElement('div');
+        meta.className = 'search-result-meta';
+        meta.innerHTML = `
+            <span><i class="fas fa-comments"></i> ${result.messages.length} messages</span>
+            <span><i class="fas fa-check"></i> ${result.matchedMessages.length} matches</span>
+        `;
+
+        const preview = document.createElement('div');
+        preview.className = 'search-result-preview';
+        const firstMatch = result.matchedMessages[0];
+        if (firstMatch) {
+            preview.textContent = `"${firstMatch.content.substring(0, 70)}..."`;
+        }
+
+        resultDiv.appendChild(title);
+        resultDiv.appendChild(meta);
+        resultDiv.appendChild(preview);
+
+        resultDiv.addEventListener('click', () => {
+            // Load this conversation
+            currentModel = result;
+            document.getElementById('search-modal').style.display = 'none';
+            loadChatWithModel(result);
+        });
+
+        searchResults.appendChild(resultDiv);
+    });
+}
+
+// Initialize export conversations
+function initExportConversations() {
+    const exportBtn = document.getElementById('export-conversations-btn');
+    const exportModal = document.getElementById('export-modal');
+    const closeBtn = exportModal.querySelector('.close-modal');
+    const exportJsonBtn = document.getElementById('export-json-btn');
+    const exportMarkdownBtn = document.getElementById('export-markdown-btn');
+    const exportAllTxtBtn = document.getElementById('export-all-txt-btn');
+
+    exportBtn.addEventListener('click', () => {
+        exportModal.style.display = 'flex';
+        document.getElementById('export-status').innerHTML = '';
+    });
+
+    closeBtn.addEventListener('click', () => {
+        exportModal.style.display = 'none';
+    });
+
+    exportJsonBtn.addEventListener('click', () => exportConversations('json'));
+    exportMarkdownBtn.addEventListener('click', () => exportConversations('markdown'));
+    exportAllTxtBtn.addEventListener('click', () => exportConversations('text'));
+
+    // Close modal when clicking outside
+    exportModal.addEventListener('click', (e) => {
+        if (e.target === exportModal) {
+            exportModal.style.display = 'none';
+        }
+    });
+}
+
+// Export conversations in specified format
+function exportConversations(format) {
+    const statusDiv = document.getElementById('export-status');
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing export...';
+
+    setTimeout(() => {
+        let content = '';
+        let filename = `conversations_${new Date().getTime()}`;
+        let mimeType = 'text/plain';
+
+        const allConversations = [];
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('chat_')) {
+                const modelId = key.replace('chat_', '');
+                const chatData = JSON.parse(localStorage.getItem(key)) || [];
+                const model = availableModels.find(m => m.id === modelId);
+                if (model && chatData.length > 0) {
+                    allConversations.push({
+                        modelId,
+                        modelName: model.name,
+                        provider: model.provider,
+                        messages: chatData
+                    });
+                }
+            }
+        });
+
+        if (format === 'json') {
+            content = JSON.stringify(allConversations, null, 2);
+            filename += '.json';
+            mimeType = 'application/json';
+        } else if (format === 'markdown') {
+            content = generateMarkdownExport(allConversations);
+            filename += '.md';
+            mimeType = 'text/markdown';
+        } else if (format === 'text') {
+            content = generateTextExport(allConversations);
+            filename += '.txt';
+            mimeType = 'text/plain';
+        }
+
+        // Create and download file
+        const blob = new Blob([content], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        statusDiv.innerHTML = `<i class="fas fa-check"></i> Downloaded as ${filename}`;
+        setTimeout(() => {
+            document.getElementById('export-modal').style.display = 'none';
+        }, 2000);
+    }, 500);
+}
+
+// Generate markdown format
+function generateMarkdownExport(conversations) {
+    let markdown = `# AI Chat Conversations Export\n\n`;
+    markdown += `**Exported on:** ${new Date().toLocaleString()}\n\n`;
+
+    conversations.forEach((conv, index) => {
+        markdown += `## ${index + 1}. ${conv.modelName} (${conv.provider})\n\n`;
+        
+        conv.messages.forEach(msg => {
+            const role = msg.role === 'user' ? '👤 You' : '🤖 AI';
+            markdown += `**${role}:**\n${msg.content}\n\n`;
+        });
+        
+        markdown += `---\n\n`;
+    });
+
+    return markdown;
+}
+
+// Generate text format
+function generateTextExport(conversations) {
+    let text = `AI CHAT CONVERSATIONS EXPORT\n`;
+    text += `${'='.repeat(60)}\n`;
+    text += `Exported on: ${new Date().toLocaleString()}\n`;
+    text += `${'='.repeat(60)}\n\n`;
+
+    conversations.forEach((conv, index) => {
+        text += `${index + 1}. ${conv.modelName} (${conv.provider})\n`;
+        text += `${'-'.repeat(40)}\n`;
+        
+        conv.messages.forEach(msg => {
+            const role = msg.role === 'user' ? 'You' : 'AI';
+            text += `[${role}]: ${msg.content}\n\n`;
+        });
+        
+        text += `\n`;
+    });
+
+    return text;
 } 
