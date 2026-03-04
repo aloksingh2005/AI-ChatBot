@@ -2395,4 +2395,46 @@ header h1 {
 .template-action-btn.delete:hover {
     background-color: #e74c3c;
     border-color: #e74c3c;
+}
+
+/* Keyboard Shortcuts */
+.shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--chat-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.shortcut-keys {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.shortcut-keys kbd {
+    padding: 4px 8px;
+    background-color: var(--message-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shortcut-description {
+    color: var(--text-secondary);
+    font-size: 14px;
 } 

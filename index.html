@@ -71,6 +71,10 @@
                         <i class="fas fa-key"></i>
                         <span>Manage API</span>
                     </div>
+                    <div class="setting-item" id="shortcuts-help-btn">
+                        <i class="fas fa-keyboard"></i>
+                        <span>Keyboard Shortcuts</span>
+                    </div>
                     <div class="setting-item">
                         <i class="fas fa-info-circle"></i>
                         <span>About App</span>
@@ -304,6 +308,58 @@
             <h3>Saved Templates</h3>
             <div id="templates-list">
                 <!-- Saved templates will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Help Modal -->
+    <div id="shortcuts-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Keyboard Shortcuts</h2>
+            <div class="shortcuts-list">
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                    </div>
+                    <div class="shortcut-description">Send message</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                    </div>
+                    <div class="shortcut-description">Clear chat / New conversation</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>S</kbd>
+                    </div>
+                    <div class="shortcut-description">Search conversations</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>E</kbd>
+                    </div>
+                    <div class="shortcut-description">Export conversations</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>B</kbd>
+                    </div>
+                    <div class="shortcut-description">Toggle sidebar</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Ctrl</kbd> + <kbd>/</kbd>
+                    </div>
+                    <div class="shortcut-description">Show this shortcuts help</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="shortcut-keys">
+                        <kbd>Esc</kbd>
+                    </div>
+                    <div class="shortcut-description">Close modals / Go back</div>
+                </div>
             </div>
         </div>
     </div>

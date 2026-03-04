@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize quick actions
     initQuickActions();
 
+    // Initialize keyboard shortcuts
+    initKeyboardShortcuts();
+
     // Initialize Manage API button
     initManageAPI();
 
@@ -2171,4 +2174,98 @@ function deleteCustomTemplate(templateId) {
         loadCustomTemplates();
         showToast('Template deleted');
     }
+}
+
+// Initialize keyboard shortcuts
+function initKeyboardShortcuts() {
+    const shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    const closeBtn = shortcutsModal.querySelector('.close-modal');
+    
+    // Open shortcuts help
+    if (shortcutsHelpBtn) {
+        shortcutsHelpBtn.addEventListener('click', () => {
+            shortcutsModal.style.display = 'flex';
+        });
+    }
+    
+    // Close modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            shortcutsModal.style.display = 'none';
+        });
+    }
+    
+    shortcutsModal.addEventListener('click', (e) => {
+        if (e.target === shortcutsModal) {
+            shortcutsModal.style.display = 'none';
+        }
+    });
+    
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Enter: Send message (handled in chat.js already, but ensure it works)
+        if (e.ctrlKey && e.key === 'Enter') {
+            const sendBtn = document.getElementById('send-btn');
+            const chatScreen = document.getElementById('chat-screen');
+            if (chatScreen.style.display !== 'none' && sendBtn) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        }
+        
+        // Ctrl+K: Clear chat / New conversation
+        if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            const chatScreen = document.getElementById('chat-screen');
+            if (chatScreen.style.display !== 'none') {
+                if (confirm('Start a new conversation? Current chat will be saved.')) {
+                    const backBtn = document.getElementById('back-btn');
+                    if (backBtn) backBtn.click();
+                }
+            }
+        }
+        
+        // Ctrl+S: Search conversations
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            const searchBtn = document.getElementById('search-conversations-btn');
+            if (searchBtn) searchBtn.click();
+        }
+        
+        // Ctrl+E: Export conversations
+        if (e.ctrlKey && e.key === 'e') {
+            e.preventDefault();
+            const exportBtn = document.getElementById('export-conversations-btn');
+            if (exportBtn) exportBtn.click();
+        }
+        
+        // Ctrl+B: Toggle sidebar
+        if (e.ctrlKey && e.key === 'b') {
+            e.preventDefault();
+            if (typeof toggleSidebar === 'function') {
+                toggleSidebar();
+            }
+        }
+        
+        // Ctrl+/: Show shortcuts help
+        if (e.ctrlKey && e.key === '/') {
+            e.preventDefault();
+            shortcutsModal.style.display = 'flex';
+        }
+        
+        // Esc: Close modals / Go back
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.modal[style*="display: flex"]');
+            if (openModal) {
+                openModal.style.display = 'none';
+            } else {
+                const chatScreen = document.getElementById('chat-screen');
+                if (chatScreen.style.display !== 'none') {
+                    const backBtn = document.getElementById('back-btn');
+                    if (backBtn) backBtn.click();
+                }
+            }
+        }
+    });
 } 
